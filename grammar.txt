@@ -1,0 +1,66 @@
+// definition      =
+// concatenation   ,
+// termination     ;
+// alternation     |
+// exception       -
+// optionality     [ ... ]
+// repetition      { ... }
+// grouping        ( ... )
+// terminal string " ... " | ' ... '
+// terminal regex  r" ... " | r' ... '
+
+// LEXICAL DEFINITIONS
+
+comment = ";", { r"[^\n]*" } ;
+
+tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter })
+
+token = identifier | boolean | number | string | "(" | ")" | "'" ;
+delimiter = r"\s" | "(" | ")" | '"' | ";" ;
+
+identifier = identifier_inital, { identifier_subsequent } ;
+identifier_inital = r"[a-zA-Z!$%&*\/:<=>?^_~]" ;
+identifier_subsequent = identifier_initial | r"[0-9+\-.@]" ;
+
+boolean = "#t" | "#f" ;
+number = r"[0-9]+(?:\.[0-9]+)?" ;
+string = '"', { r"[^"\\]" | "\\" }, '"' ;
+
+// SIMPLE SYNTACTICAL DEFINITIONS
+
+datum = identifier | literal | list ;
+list = ( "(", { datum }, ")" ) ;
+
+// SYNTACTICAL DEFINITIONS
+
+root = { expression } ;
+expression = identifier
+	| literal
+	| sequence
+	| procedure_call
+	| lambda_expression
+	| conditional
+	| definition
+	| assignment ;
+
+literal = quotation | boolean | number | string | "()" ;
+quotation = ( "(", "quote", datum, ")" ) ;
+
+sequence = "(", "begin", expression, { expression }, ")" ;
+
+procedure_call = "(", call_operator, call_operands, ")" ;
+call_operator = identifier ;
+call_operands = { expression } ;
+
+lambda_expression = "(", "lambda", lambda_formals, lambda_body, ")" ;
+lambda_formals = ( "(", { identifier } ")" ) | identifier ;
+lambda_body = { expression }, expression ;
+
+conditional = ( "(", "if", cond_test, cond_consequent, [cond_alternate] ")" ) ;
+cond_test = expression ;
+cond_consequent = expression ;
+cond_alternate = expression ;
+
+definition = "(", "define", identifier, expression ")" ;
+
+assignment = "(", "set!", identifier, expression ")" ;

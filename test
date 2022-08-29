@@ -1,0 +1,29 @@
+#f
+123
+"foo"
+()
+positive?
+
+(quote positive?)
+(quote 123)
+(quote (a b c))
+
+(begin
+	(quote 123)
+	(lambda x 3))
+
+(define positive?
+	(lambda x
+		(if (< x 0)
+			#f
+			#t)))
+
+(print (positive? 30))
+
+(set! positive?
+	(lambda x
+		(if (< x 0)
+			"false"
+			"true")))
+
+(print (positive? 30))

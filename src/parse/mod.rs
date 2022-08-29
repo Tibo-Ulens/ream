@@ -1,0 +1,294 @@
+use crate::error::{Error, ParseError};
+use crate::lex::{Token, TokenType};
+
+mod expression;
+
+pub(crate) use expression::*;
+
+/// The root node of the type-checked AST
+#[derive(Clone)]
+pub(crate) struct Root {
+	pub(crate) exprs: Vec<Expression>,
+}
+
+pub(crate) struct Parser {
+	tokens:    Vec<Token>,
+	token_len: usize,
+	idx:       usize,
+}
+
+impl Parser {
+	pub(crate) fn new(tokens: Vec<Token>) -> Self {
+		let len = tokens.len();
+		Self { tokens, token_len: len, idx: 0 }
+	}
+
+	pub(crate) fn parse(&mut self) -> Result<Root, Error> {
+		let mut exprs = vec![];
+
+		while self.idx < self.token_len {
+			let expr = self.try_expression()?;
+			exprs.push(expr);
+		}
+
+		Ok(Root { exprs })
+	}
+
+	/// Return the value of the current token
+	fn peek(&self) -> Token { self.tokens[self.idx].clone() }
+
+	/// Advance one token and return its value
+	fn next(&mut self) -> Token {
+		let next = self.tokens[self.idx].clone();
+		self.idx += 1;
+		next
+	}
+
+	/// Try to match an expression
+	fn try_expression(&mut self) -> Result<Expression, Error> {
+		let token = self.next();
+		match token.ty {
+			TokenType::Identifier(_) => Ok(Expression::Identifier(IdentifierExpr(token))),
+			TokenType::Bool(_) => Ok(Expression::Literal(LiteralExpr::Bool(token))),
+			TokenType::Number(_) => Ok(Expression::Literal(LiteralExpr::Number(token))),
+			TokenType::String(_) => Ok(Expression::Literal(LiteralExpr::String(token))),
+			TokenType::Nil => Ok(Expression::Literal(LiteralExpr::Nil(token))),
+			TokenType::LeftParenthesis => {
+				match self.peek().ty {
+					TokenType::QuoteKW => {
+						let expr = Expression::Literal(self.try_quote()?);
+
+						// Match closing paren
+						self.try_right_paren()?;
+
+						Ok(expr)
+					},
+					TokenType::BeginKW => Ok(Expression::Sequence(self.try_sequence()?)),
+					TokenType::LambdaKW => Ok(Expression::Lambda(self.try_lambda()?)),
+					TokenType::IfKW => Ok(Expression::If(self.try_if()?)),
+					TokenType::DefineKW => Ok(Expression::Define(self.try_define()?)),
+					TokenType::SetKW => Ok(Expression::Assign(self.try_assign()?)),
+					TokenType::Identifier(_) => Ok(Expression::Call(self.try_call()?)),
+					_ => Err(ParseError::UnexpectedToken(token).into()),
+				}
+			},
+			_ => Err(ParseError::UnexpectedToken(token).into()),
+		}
+	}
+
+	fn try_quote(&mut self) -> Result<LiteralExpr, Error> {
+		// Skip the QuoteKW token
+		self.next();
+
+		let datum = self.try_datum()?;
+
+		Ok(LiteralExpr::Quotation(datum))
+	}
+
+	fn try_datum(&mut self) -> Result<Datum, Error> {
+		let next = self.next();
+		match next.ty {
+			TokenType::BeginKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+			TokenType::LambdaKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+			TokenType::IfKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+			TokenType::DefineKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+			TokenType::SetKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+
+			TokenType::Bool(_) => Ok(Datum::LitDatum(Box::new(LiteralExpr::Bool(next)))),
+			TokenType::Number(_) => Ok(Datum::LitDatum(Box::new(LiteralExpr::Number(next)))),
+			TokenType::String(_) => Ok(Datum::LitDatum(Box::new(LiteralExpr::String(next)))),
+			TokenType::Nil => Ok(Datum::LitDatum(Box::new(LiteralExpr::Nil(next)))),
+
+			TokenType::Identifier(_) => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+
+			TokenType::LeftParenthesis => {
+				let mut data = vec![];
+				while self.peek().ty != TokenType::RightParenthesis {
+					let datum = self.try_datum()?;
+					data.push(datum);
+				}
+
+				// Match closing paren
+				self.try_right_paren()?;
+
+				Ok(Datum::ListDatum(data))
+			},
+			_ => Err(ParseError::UnexpectedToken(next).into()),
+		}
+	}
+
+	/// Try to match a sequence expression
+	fn try_sequence(&mut self) -> Result<SequenceExpr, Error> {
+		// Skip the BeginKW token
+		self.next();
+
+		let mut exprs = vec![];
+		while self.peek().ty != TokenType::RightParenthesis {
+			let expr = self.try_expression()?;
+			exprs.push(expr);
+		}
+
+		// Match closing paren
+		self.try_right_paren()?;
+
+		Ok(SequenceExpr(exprs))
+	}
+
+	/// Try to match a lambda expression
+	fn try_lambda(&mut self) -> Result<LambdaExpr, Error> {
+		// Skip the LambdaKW token
+		self.next();
+
+		let mut formals = vec![];
+		let next = self.next();
+		match next.ty {
+			TokenType::LeftParenthesis => {
+				while self.peek().ty != TokenType::RightParenthesis {
+					let formal = self.next();
+					match formal.ty {
+						TokenType::Identifier(_) => formals.push(IdentifierExpr(formal)),
+						_ => {
+							return Err(ParseError::Expected {
+								expected: "`Identifier`".to_string(),
+								found:    formal,
+							}
+							.into());
+						},
+					}
+				}
+
+				// Skip closing paren
+				self.next();
+			},
+			TokenType::Identifier(_) => formals.push(IdentifierExpr(next)),
+			TokenType::Nil => (),
+			_ => {
+				return Err(ParseError::Expected {
+					expected: "`(` or `Identifier`".to_string(),
+					found:    next,
+				}
+				.into());
+			},
+		}
+
+		let mut body = vec![];
+		while self.peek().ty != TokenType::RightParenthesis {
+			let expr = self.try_expression()?;
+			body.push(expr);
+		}
+
+		// Match closing paren
+		self.try_right_paren()?;
+
+		Ok(LambdaExpr { formals: LambdaFormals(formals), body: LambdaBody(body) })
+	}
+
+	/// Try to match a lambda expression
+	fn try_if(&mut self) -> Result<IfExpr, Error> {
+		// Skip the IfKW token
+		self.next();
+
+		let test = self.try_expression()?;
+		let consequent = self.try_expression()?;
+
+		match self.peek().ty {
+			TokenType::RightParenthesis => {
+				// Match closing paren
+				self.try_right_paren()?;
+
+				Ok(IfExpr {
+					test:       IfTest(Box::new(test)),
+					consequent: IfConsequent(Box::new(consequent)),
+					alternate:  None,
+				})
+			},
+			_ => {
+				let alternate = self.try_expression()?;
+
+				// Match closing paren
+				self.try_right_paren()?;
+
+				Ok(IfExpr {
+					test:       IfTest(Box::new(test)),
+					consequent: IfConsequent(Box::new(consequent)),
+					alternate:  Some(IfAlternate(Box::new(alternate))),
+				})
+			},
+		}
+	}
+
+	/// Try to match a lambda expression
+	fn try_define(&mut self) -> Result<DefineExpr, Error> {
+		// Skip the DefineKW token
+		self.next();
+
+		let next = self.next();
+		let target = match next.ty {
+			TokenType::Identifier(_) => IdentifierExpr(next),
+			_ => {
+				return Err(ParseError::Expected {
+					expected: "`Identifier`".to_string(),
+					found:    next,
+				}
+				.into());
+			},
+		};
+
+		let value = self.try_expression()?;
+
+		// Match closing paren
+		self.try_right_paren()?;
+
+		Ok(DefineExpr { target: DefineTarget(target), value: DefineValue(Box::new(value)) })
+	}
+
+	/// Try to match a lambda expression
+	fn try_assign(&mut self) -> Result<AssignExpr, Error> {
+		// Skip the SetKW token
+		self.next();
+
+		let next = self.next();
+		let target = match next.ty {
+			TokenType::Identifier(_) => IdentifierExpr(next),
+			_ => {
+				return Err(ParseError::Expected {
+					expected: "`Identifier`".to_string(),
+					found:    next,
+				}
+				.into());
+			},
+		};
+
+		let value = self.try_expression()?;
+
+		// Match closing paren
+		self.try_right_paren()?;
+
+		Ok(AssignExpr { target: AssignTarget(target), value: AssignValue(Box::new(value)) })
+	}
+
+	/// Try to match a lambda expression
+	fn try_call(&mut self) -> Result<CallExpr, Error> {
+		let operator = CallOperator(IdentifierExpr(self.next()));
+
+		let mut operands = vec![];
+		while self.peek().ty != TokenType::RightParenthesis {
+			let expr = self.try_expression()?;
+			operands.push(expr);
+		}
+
+		// Match closing paren
+		self.try_right_paren()?;
+
+		Ok(CallExpr { operator, operands: CallOperands(operands) })
+	}
+
+	/// Try to match a right parenthesis
+	fn try_right_paren(&mut self) -> Result<(), Error> {
+		let next = self.next();
+		match next.ty {
+			TokenType::RightParenthesis => Ok(()),
+			_ => Err(ParseError::Expected { expected: "`)`".to_string(), found: next }.into()),
+		}
+	}
+}
