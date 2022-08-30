@@ -1,14 +1,13 @@
 use super::IdentifierExpr;
-use crate::lex::Token;
 
 /// An AST expression which evaluates to a literal
 #[derive(Clone)]
 pub(crate) enum LiteralExpr {
 	Quotation(Datum),
-	Bool(Token),
-	Number(Token),
-	String(Token),
-	Nil(Token),
+	Bool(bool),
+	Number(f64),
+	String(String),
+	Nil,
 }
 
 /// A less specific type equivalent to an [`Expression`] used in Quotations

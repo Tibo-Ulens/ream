@@ -9,7 +9,7 @@ pub(crate) use token::*;
 lazy_static! {
 	static ref NUMBER_REGEX: Regex = Regex::new(r"[0-9]+(?:\.[0-9]+)?").unwrap();
 	static ref IDENTIFIER_REGEX: Regex =
-		Regex::new(r"[a-zA-Z!$%&*/:<=>?^_~][a-zA-Z!$%&*/:<=>?^_~0-9+\-.@]*").unwrap();
+		Regex::new(r"(?:[a-zA-Z!$%&*/:<=>?^_~][a-zA-Z!$%&*/:<=>?^_~0-9+\-.@]*)|[+-]").unwrap();
 }
 
 impl std::fmt::Display for Token {
@@ -123,9 +123,9 @@ impl<'s> Lexer<'s> {
 					let raw = self.get_string();
 
 					if NUMBER_REGEX.is_match(&raw) {
-						let num: f64 = raw
-							.parse()
-							.expect(&format!("invalid number at [{}:{}]", self.line, self.col));
+						let num: f64 = raw.parse().unwrap_or_else(|_| {
+							panic!("invalid number at [{}:{}]", self.line, self.col)
+						});
 
 						let t = self.make_token(TokenType::Number(num));
 

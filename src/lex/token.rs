@@ -1,4 +1,3 @@
-
 /// All possible types of token
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum TokenType {

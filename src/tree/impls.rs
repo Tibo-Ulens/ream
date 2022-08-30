@@ -52,7 +52,7 @@ impl ToNode for Expression {
 
 impl ToNode for IdentifierExpr {
 	fn to_node(&self) -> Node {
-		Node { repr: format!("Identifier(`{}`)", self.0.repr), children: vec![] }
+		Node { repr: format!("Identifier(`{}`)", self.0), children: vec![] }
 	}
 }
 
@@ -60,10 +60,10 @@ impl ToNode for LiteralExpr {
 	fn to_node(&self) -> Node {
 		let (repr, children) = match self {
 			Self::Quotation(d) => ("Literal(Quotation)".to_string(), vec![d.to_node()]),
-			Self::Bool(t) => (format!("Literal(Bool(`{}`))", t.repr), vec![]),
-			Self::Number(t) => (format!("Literal(Number(`{}`))", t.repr), vec![]),
-			Self::String(t) => (format!("Literal(String(`{}`))", t.repr), vec![]),
-			Self::Nil(t) => (format!("Literal(Nil(`{}`))", t.repr), vec![]),
+			Self::Bool(t) => (format!("Literal(Bool(`{}`))", t), vec![]),
+			Self::Number(t) => (format!("Literal(Number(`{}`))", t), vec![]),
+			Self::String(t) => (format!("Literal(String(`{}`))", t), vec![]),
+			Self::Nil => ("Literal(Nil)".to_string(), vec![]),
 		};
 
 		Node { repr, children }

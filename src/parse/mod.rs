@@ -48,11 +48,11 @@ impl Parser {
 	fn try_expression(&mut self) -> Result<Expression, Error> {
 		let token = self.next();
 		match token.ty {
-			TokenType::Identifier(_) => Ok(Expression::Identifier(IdentifierExpr(token))),
-			TokenType::Bool(_) => Ok(Expression::Literal(LiteralExpr::Bool(token))),
-			TokenType::Number(_) => Ok(Expression::Literal(LiteralExpr::Number(token))),
-			TokenType::String(_) => Ok(Expression::Literal(LiteralExpr::String(token))),
-			TokenType::Nil => Ok(Expression::Literal(LiteralExpr::Nil(token))),
+			TokenType::Identifier(i) => Ok(Expression::Identifier(IdentifierExpr(i))),
+			TokenType::Bool(b) => Ok(Expression::Literal(LiteralExpr::Bool(b))),
+			TokenType::Number(n) => Ok(Expression::Literal(LiteralExpr::Number(n))),
+			TokenType::String(s) => Ok(Expression::Literal(LiteralExpr::String(s))),
+			TokenType::Nil => Ok(Expression::Literal(LiteralExpr::Nil)),
 			TokenType::LeftParenthesis => {
 				match self.peek().ty {
 					TokenType::QuoteKW => {
@@ -88,18 +88,24 @@ impl Parser {
 	fn try_datum(&mut self) -> Result<Datum, Error> {
 		let next = self.next();
 		match next.ty {
-			TokenType::BeginKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
-			TokenType::LambdaKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
-			TokenType::IfKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
-			TokenType::DefineKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
-			TokenType::SetKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+			TokenType::BeginKW => {
+				Ok(Datum::IdentDatum(Box::new(IdentifierExpr("begin".to_string()))))
+			},
+			TokenType::LambdaKW => {
+				Ok(Datum::IdentDatum(Box::new(IdentifierExpr("lambda".to_string()))))
+			},
+			TokenType::IfKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr("if".to_string())))),
+			TokenType::DefineKW => {
+				Ok(Datum::IdentDatum(Box::new(IdentifierExpr("define".to_string()))))
+			},
+			TokenType::SetKW => Ok(Datum::IdentDatum(Box::new(IdentifierExpr("set!".to_string())))),
 
-			TokenType::Bool(_) => Ok(Datum::LitDatum(Box::new(LiteralExpr::Bool(next)))),
-			TokenType::Number(_) => Ok(Datum::LitDatum(Box::new(LiteralExpr::Number(next)))),
-			TokenType::String(_) => Ok(Datum::LitDatum(Box::new(LiteralExpr::String(next)))),
-			TokenType::Nil => Ok(Datum::LitDatum(Box::new(LiteralExpr::Nil(next)))),
+			TokenType::Bool(b) => Ok(Datum::LitDatum(Box::new(LiteralExpr::Bool(b)))),
+			TokenType::Number(n) => Ok(Datum::LitDatum(Box::new(LiteralExpr::Number(n)))),
+			TokenType::String(s) => Ok(Datum::LitDatum(Box::new(LiteralExpr::String(s)))),
+			TokenType::Nil => Ok(Datum::LitDatum(Box::new(LiteralExpr::Nil))),
 
-			TokenType::Identifier(_) => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(next)))),
+			TokenType::Identifier(i) => Ok(Datum::IdentDatum(Box::new(IdentifierExpr(i)))),
 
 			TokenType::LeftParenthesis => {
 				let mut data = vec![];
@@ -146,7 +152,7 @@ impl Parser {
 				while self.peek().ty != TokenType::RightParenthesis {
 					let formal = self.next();
 					match formal.ty {
-						TokenType::Identifier(_) => formals.push(IdentifierExpr(formal)),
+						TokenType::Identifier(i) => formals.push(IdentifierExpr(i)),
 						_ => {
 							return Err(ParseError::Expected {
 								expected: "`Identifier`".to_string(),
@@ -160,7 +166,7 @@ impl Parser {
 				// Skip closing paren
 				self.next();
 			},
-			TokenType::Identifier(_) => formals.push(IdentifierExpr(next)),
+			TokenType::Identifier(i) => formals.push(IdentifierExpr(i)),
 			TokenType::Nil => (),
 			_ => {
 				return Err(ParseError::Expected {
@@ -224,7 +230,7 @@ impl Parser {
 
 		let next = self.next();
 		let target = match next.ty {
-			TokenType::Identifier(_) => IdentifierExpr(next),
+			TokenType::Identifier(i) => IdentifierExpr(i),
 			_ => {
 				return Err(ParseError::Expected {
 					expected: "`Identifier`".to_string(),
@@ -249,7 +255,7 @@ impl Parser {
 
 		let next = self.next();
 		let target = match next.ty {
-			TokenType::Identifier(_) => IdentifierExpr(next),
+			TokenType::Identifier(i) => IdentifierExpr(i),
 			_ => {
 				return Err(ParseError::Expected {
 					expected: "`Identifier`".to_string(),
@@ -269,7 +275,12 @@ impl Parser {
 
 	/// Try to match a lambda expression
 	fn try_call(&mut self) -> Result<CallExpr, Error> {
-		let operator = CallOperator(IdentifierExpr(self.next()));
+		let op = match self.next().ty {
+			TokenType::Identifier(i) => IdentifierExpr(i),
+			_ => unimplemented!(),
+		};
+
+		let operator = CallOperator(op);
 
 		let mut operands = vec![];
 		while self.peek().ty != TokenType::RightParenthesis {

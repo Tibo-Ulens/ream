@@ -1,5 +1,3 @@
-use crate::lex::Token;
-
 mod assign;
 mod call;
 mod define;
@@ -29,7 +27,7 @@ pub(crate) enum Expression {
 
 /// An AST expression which evaluates to an identifier
 #[derive(Clone)]
-pub(crate) struct IdentifierExpr(pub(crate) Token);
+pub(crate) struct IdentifierExpr(pub(crate) String);
 
 /// An AST expression which evaluates to the last expression in its sequence
 #[derive(Clone)]
