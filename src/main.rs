@@ -1,8 +1,10 @@
 #![feature(iter_collect_into)]
 
+use std::cell::RefCell;
 use std::env;
 use std::fs::File;
 use std::io::Read;
+use std::rc::Rc;
 
 #[macro_use]
 extern crate lazy_static;
@@ -13,12 +15,14 @@ use error::Error;
 use ptree::print_tree;
 
 mod error;
+mod eval;
 mod lex;
 mod parse;
 mod tree;
 
 use lex::Lexer;
 
+use crate::eval::{Env, Eval};
 use crate::parse::Parser;
 use crate::tree::ToNode;
 
@@ -44,6 +48,9 @@ fn main() -> Result<(), Error> {
 	let tree = ast.to_node();
 
 	print_tree(&tree).unwrap();
+
+	let mut root_env = Rc::new(RefCell::new(Env::default()));
+	ast.eval(&mut root_env)?;
 
 	Ok(())
 }

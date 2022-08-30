@@ -8,6 +8,8 @@ pub(crate) enum Error {
 	Lex(#[from] LexError),
 	#[error(transparent)]
 	Parse(#[from] ParseError),
+	#[error(transparent)]
+	Eval(#[from] EvalError),
 }
 
 #[derive(Debug, Error)]
@@ -36,3 +38,19 @@ fn get_line(t: &Token) -> usize { t.line }
 fn get_col(t: &Token) -> usize { t.col }
 
 fn get_repr(t: &Token) -> String { t.repr.clone() }
+
+#[derive(Debug, Error)]
+pub(crate) enum EvalError {
+	#[error("unknown symbold `{0}`")]
+	UnknownSymbol(String),
+	#[error("can not redefine symbol `{0}`")]
+	RedefinedSymbol(String),
+	#[error("symbol `{0}` is not a procedure")]
+	NotAProcedure(String),
+	#[error("incorrect number of arguments for procedure {0}, expected {1}, found {2}")]
+	WrongArgCount(String, usize, usize),
+	#[error("invalid types for procedure {0}, expected {}, found {}", make_list(.1), make_list(.2))]
+	InvalidTypes(String, Vec<String>, Vec<String>),
+}
+
+fn make_list(v: &[String]) -> String { format!("({})", v.join(" ")) }

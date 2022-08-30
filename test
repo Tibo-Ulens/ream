@@ -1,29 +1,26 @@
-#f
-123
-"foo"
-()
-positive?
+(define fib
+	(lambda n
+		(if (<= n 2)
+			1
+			(+
+				(fib (- n 1))
+				(fib (- n 2))))))
 
-(quote positive?)
-(quote 123)
-(quote (a b c))
+(print (fib 10))
 
-(begin
-	(quote 123)
-	(lambda x 3))
+(define append
+	(lambda (list1 list2)
+        (if (nil? list1)
+			list2
+            (cons (car list1) (append (cdr list1) list2)))))
 
-(define positive?
-	(lambda x
-		(if (< x 0)
-			#f
-			#t)))
+(define rev
+	(lambda l
+		(if (nil? l)
+			()
+			(append (rev (cdr l)) (car l)))))
 
-(print (positive? 30))
-
-(set! positive?
-	(lambda x
-		(if (< (+ x 1) 1)
-			"false"
-			"true")))
-
-(print (positive? 30))
+(define list (cons 3 (cons 2 (cons 1 ()))))
+(define revlist (rev list))
+(print list)
+(print revlist)

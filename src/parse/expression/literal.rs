@@ -1,7 +1,7 @@
 use super::IdentifierExpr;
 
 /// An AST expression which evaluates to a literal
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) enum LiteralExpr {
 	Quotation(Datum),
 	Bool(bool),
@@ -11,7 +11,7 @@ pub(crate) enum LiteralExpr {
 }
 
 /// A less specific type equivalent to an [`Expression`] used in Quotations
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) enum Datum {
 	IdentDatum(Box<IdentifierExpr>),
 	LitDatum(Box<LiteralExpr>),

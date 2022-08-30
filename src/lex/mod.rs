@@ -7,7 +7,7 @@ mod token;
 pub(crate) use token::*;
 
 lazy_static! {
-	static ref NUMBER_REGEX: Regex = Regex::new(r"[0-9]+(?:\.[0-9]+)?").unwrap();
+	static ref NUMBER_REGEX: Regex = Regex::new(r"^[0-9]+(?:\.[0-9]+)?$").unwrap();
 	static ref IDENTIFIER_REGEX: Regex =
 		Regex::new(r"(?:[a-zA-Z!$%&*/:<=>?^_~][a-zA-Z!$%&*/:<=>?^_~0-9+\-.@]*)|[+-]").unwrap();
 }

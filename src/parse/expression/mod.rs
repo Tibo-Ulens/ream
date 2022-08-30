@@ -13,7 +13,7 @@ pub(crate) use lambda::*;
 pub(crate) use literal::*;
 
 /// Generic AST expression node
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) enum Expression {
 	Identifier(IdentifierExpr),
 	Literal(LiteralExpr),
@@ -26,9 +26,9 @@ pub(crate) enum Expression {
 }
 
 /// An AST expression which evaluates to an identifier
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct IdentifierExpr(pub(crate) String);
 
 /// An AST expression which evaluates to the last expression in its sequence
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct SequenceExpr(pub(crate) Vec<Expression>);
