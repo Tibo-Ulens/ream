@@ -1,0 +1,73 @@
+// definition      =
+// concatenation   ,
+// termination     ;
+// alternation     |
+// exception       -
+// optionality     [ ... ]
+// repetition      { ... }
+// grouping        ( ... )
+// terminal string " ... " | ' ... '
+// terminal regex  r" ... " | r' ... '
+
+// LEXICAL DEFINITIONS
+
+comment = ";", { r"[^\n]*" } ;
+
+tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter })
+
+token = identifier | boolean | integer | float | character | string
+        | "(" | ")" | "#(" | ":" | "." ;
+
+delimiter = r"\s" | "(" | ")" | '"' | "'" | ":" | ";" ;
+
+identifier = identifier_inital | { identifier_subsequent } ;
+identifier_inital = ?UNICODE_XID_START? | r"[!$%&*/<=>?^_~+-]" ;
+identifier_subsequent = identifier_initial | ?UNICODE_XID_CONTINUE? | r"[0-9.@]" ;
+
+boolean = "#t" | "#f" | "#true" | "#false" ;
+
+integer = r"([0-9]+)|(0x[0-9a-fA-F]+)|(0o[0-8]+)|(0b[01]+)" ;
+float = r"[0-9]+(?:\.[0-9]+)?" ;
+
+character = "'", r"(?:(?:\\')|[^'])", "'" ;
+
+string = '"', { r'(?:(?:\\")|[^"])' }, '"' ;
+
+// SIMPLE SYNTACTICAL DEFINITIONS
+
+datum = boolean | integer | character | string | identifier | list ;
+list = "(", { datum }, ")" | "(", ( datum, { datum } ), ".", datum ")" ;
+
+// SYNTACTICAL DEFINITIONS
+
+program = { expression } ;
+
+expression = identifier
+	| literal
+	| sequence
+	| procedure_call
+	| lambda_expression
+	| conditional
+	| definition ;
+
+literal = quotation | boolean | number | character | string | list ;
+quotation = ( "(", "quote", datum, ")" ) ;
+
+sequence = "(", "begin", expression, { expression }, ")" ;
+
+procedure_call = "(", call_operator, call_operands, ")" ;
+call_operator = identifier ;
+call_operands = { expression } ;
+
+lambda_expression = "(", "lambda", ":", type, lambda_formals, lambda_body, ")" ;
+lambda_formals = ( "(", { identifier, ":", type } ")" ) | ( identifier, ":", type ) ;
+lambda_body = { expression }, expression ;
+
+conditional = ( "(", "if", cond_test, cond_consequent, [cond_alternate] ")" ) ;
+cond_test = expression ;
+cond_consequent = expression ;
+cond_alternate = expression ;
+
+definition = "(", "let", identifier, [ ":", type ], expression ")" ;
+
+type = identifier ;
