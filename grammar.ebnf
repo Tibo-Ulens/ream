@@ -71,11 +71,6 @@ type_constructor = ( "Tuple", { typespec } )
 	| ( "Sum", typespec, typespec, { typespec } )
 	| ( "Product", typespec, typespec, { typespec } )
 	| (
-		"ForAll",
-		( identifier | "(", identifier, { identifier }, ")" ),
-		( typespec | "(", typespec, { typespec }, ")" ),
-	)
-	| (
 		"Function",
 		( typespec | "(", typespec, { typespec }, ")" ),
 		( typespec | "(", typespec, { typespec }, ")" )

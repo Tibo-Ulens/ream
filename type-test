@@ -1,15 +1,12 @@
-(print type-of car) ;; (ForAll A (Function (List A) A))
-(print type-of cdr) ;; (ForAll A (Function (List A) (List A)))
-(print type-of map) ;; (ForAll (A B) (Function ((Function A B) (List A)) (List B)))
+(print type-of car) ;; (Function (List A) A)
+(print type-of cdr) ;; (Function (List A) (List A))
+(print type-of map) ;; (Function ((Function A B) (List A)) (List B))
 
-(define-type Either (ForAll (A B) (Sum (:Left A) (:Right B))))
-(define-type Option (ForAll A     (Sum (:Some A) :None)))
-(define-type Pair   (ForAll A     (Product (:0 A) (:1 A))))
+(define-type Either (Sum (:Left A) (:Right B)))
+(define-type Option (Sum (:Some A) :None))
+(define-type Pair   (Product (:0 A) (:1 A)))
 
-;; (include Either::*)
-;; (include Option::*)
-
-(: map-option (ForAll (A B) (Function ((Option A) (Function A B)) (Option B))))
+(: map-option (Function ((Option A) (Function A B)) (Option B)))
 (define map-option
 	(lambda (opt f)
 		(case opt
@@ -22,7 +19,7 @@
 		let (Pair :0 x :1 y) pair
 		(max x y)))
 
-(: list-length (ForAll A (Function (List A) Integer)))
+(: list-length (Function (List A) Integer))
 (define list-length
 	(lambda lst
 		(if (null? lst)
