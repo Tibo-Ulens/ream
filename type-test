@@ -1,10 +1,47 @@
+(print type-of car) ;; (ForAll A (Function (List A) A))
+(print type-of cdr) ;; (ForAll A (Function (List A) (List A)))
+(print type-of map) ;; (ForAll (A B) (Function ((Function A B) (List A)) (List B)))
+
+(define-type Either (ForAll (A B) (Sum (:Left A) (:Right B))))
+(define-type Option (ForAll A     (Sum (:Some A) :None)))
+(define-type Pair   (ForAll A     (Product (:0 A) (:1 A))))
+
+;; (include Either::*)
+;; (include Option::*)
+
+(: map-option (ForAll (A B) (Function ((Option A) (Function A B)) (Option B))))
+(define map-option
+	(lambda (opt f)
+		(case opt
+			(:Some x (f x))
+			(:None :None))))
+
+(: largest-in-pair (Function (Pair Integer) Integer))
+(define largest-in-pair
+	(lambda pair
+		let (Pair :0 x :1 y) pair
+		(max x y)))
+
+(: list-length (ForAll A (Function (List A) Integer)))
+(define list-length
+	(lambda lst
+		(if (null? lst)
+			0
+			(+ 1 (list-length (cdr lst))))))
+
+(print list-length ())                ;; 0
+(print list-length ('a'))             ;; 1
+(print list-length ('a' . 'b' . 'c')) ;; 3
+(print list-length 3)                 ;; type error: expected `List A` found `Integer`
+
+(: fib (Function Integer Integer))
 (define fib
-	(lambda n:int
+	(lambda n
 		(if (<= n 2)
 			1
 			(+
 				(fib (- n 1))
 				(fib (- n 2))))))
 
-(print (fib 10))
-(print (fib "foo"))
+(print fib 10)    ;; 55
+(print fib "foo") ;; type error: expected `Integer` found `String`
