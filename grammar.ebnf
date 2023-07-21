@@ -100,3 +100,5 @@ conditional = ( "(", "if", cond_test, cond_consequent, [cond_alternate] ")" ) ;
 cond_test = expression ;
 cond_consequent = expression ;
 cond_alternate = expression ;
+
+inclusion = "(", "include", string, { string } ")" ;
