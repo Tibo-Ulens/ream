@@ -1,24 +1,24 @@
-// definition      =
-// concatenation   ,
-// termination     ;
-// alternation     |
-// exception       -
-// optionality     [ ... ]
-// repetition      { ... }
-// grouping        ( ... )
-// terminal string " ... " | ' ... '
-// terminal regex  r" ... " | r' ... '
+(* definition      = *)
+(* concatenation   , *)
+(* termination     ; *)
+(* alternation     | *)
+(* exception       - *)
+(* optionality     [ ... ] *)
+(* repetition      { ... } *)
+(* grouping        ( ... ) *)
+(* terminal string " ... " | ' ... ' *)
+(* terminal regex  r" ... " | r' ... ' *)
 
-// LEXICAL DEFINITIONS
+(* LEXICAL DEFINITIONS *)
 
 comment = ";", { r"[^\n]*" } ;
 
-tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter })
+tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter }) ;
 
-token = identifier | boolean | integer | float | character | string
-        | "(" | ")" | "#(" | "(:" | ":" | "." ;
+token = identifier | boolean | integer | float | character | string | atom
+        | "(" | ")" | "#(" | "(:" | "." ;
 
-delimiter = r"\s" | "(" | ")" | '"' | "'" | ":" | ";" ;
+delimiter = r"\s" | "(" | ")" | '"' | "'" | ";" ;
 
 identifier = identifier_inital | { identifier_subsequent } ;
 identifier_inital = ?UNICODE_XID_START? | r"[!$%&*/<=>?^_~+-]" ;
@@ -33,12 +33,14 @@ character = "'", r"(?:(?:\\')|[^'])", "'" ;
 
 string = '"', { r'(?:(?:\\")|[^"])' }, '"' ;
 
-// SIMPLE SYNTACTICAL DEFINITIONS
+atom = ":", identifier ;
 
-datum = boolean | integer | character | string | identifier | list ;
+(* SIMPLE SYNTACTICAL DEFINITIONS *)
+
+datum = identifier | boolean | integer | float | character | string | atom | list ;
 list = "(", { datum }, ")" | "(", ( datum, { datum } ), ".", datum ")" ;
 
-// SYNTACTICAL DEFINITIONS
+(* SYNTACTICAL DEFINITIONS *)
 
 program = { expression } ;
 
@@ -61,20 +63,23 @@ definition = "(", "let", identifier, expression ")" ;
 
 type_alias = "type-alias", identifier, typespec ;
 
-algebraic_type_definition = "define-type", identifier,
+algebraic_type_definition = "define-type", identifier, typespec ;
 
-typespec = identifier | "(", type_constructor ")" ;
+typespec = identifier | ( "(", type_constructor ")" ) ;
 
-type_constructor = ( "Tuple", { typespec } )
+type_constructor = "Bottom"
+	| ( "Tuple", { typespec } )
 	| ( "List", typespec )
 	| ( "Vector", typespec )
-	| ( "Sum", typespec, typespec, { typespec } )
-	| ( "Product", typespec, typespec, { typespec } )
 	| (
 		"Function",
 		( typespec | "(", typespec, { typespec }, ")" ),
 		( typespec | "(", typespec, { typespec }, ")" )
-	) ;
+	)
+	| ( "Sum", named_typespec, named_typespec, { named_typespec } )
+	| ( "Product", named_typespec, named_typespec, { named_typespec } ) ;
+
+named_typespec = atom, [ typespec ] ;
 
 type_annotation = "(:", identifier, typespec ")" ;
 

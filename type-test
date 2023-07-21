@@ -9,14 +9,14 @@
 (: map-option (Function ((Option A) (Function A B)) (Option B)))
 (define map-option
 	(lambda (opt f)
-		(case opt
+		(match opt
 			(:Some x (f x))
 			(:None :None))))
 
 (: largest-in-pair (Function (Pair Integer) Integer))
 (define largest-in-pair
 	(lambda pair
-		let (Pair :0 x :1 y) pair
+		(let (Pair :0 x :1 y) pair)
 		(max x y)))
 
 (: list-length (Function (List A) Integer))
