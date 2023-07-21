@@ -10,11 +10,11 @@ use ream::{Error, Lexer};
 #[command(author, version, about, long_about=None)]
 struct Args {
 	/// The source file
-	pub source_file: String,
+	source_file: String,
 
 	/// How verbose the output should be
 	#[arg(short='v', long="verbose", action=clap::ArgAction::Count)]
-	pub verbosity: u8,
+	verbosity: u8,
 }
 
 fn main() -> miette::Result<()> {

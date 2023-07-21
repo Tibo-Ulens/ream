@@ -332,7 +332,7 @@ impl<'s> Lexer<'s> {
 			return Err(LexError::InvalidNumber {
 				loc:   (self.start, raw.len()).into(),
 				help:  Some(NON_DECIMAL_FLOAT_LITERAL.to_string()),
-				found: raw.to_string(),
+				found: raw,
 			});
 		}
 
