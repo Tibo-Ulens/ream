@@ -59,8 +59,8 @@ impl<'s> Lexer<'s> {
 			|| c == '<' || c == '='
 			|| c == '>' || c == '?'
 			|| c == '^' || c == '_'
-			|| c == '~' || c == '+'
-			|| c == '-'
+			|| c == '~' || c == ':'
+			|| c == '+' || c == '-'
 	}
 
 	/// Check if a character can continue an identifier
@@ -73,7 +73,7 @@ impl<'s> Lexer<'s> {
 
 	/// Check if a character is a delimiter
 	fn is_delimiter(c: char) -> bool {
-		c.is_whitespace() || c == '(' || c == ')' || c == '"' || c == '\'' || c == ':' || c == ';'
+		c.is_whitespace() || c == '(' || c == ')' || c == '"' || c == '\'' || c == ';'
 	}
 
 	/// Lex a single token
@@ -88,8 +88,8 @@ impl<'s> Lexer<'s> {
 		match self.next()? {
 			'(' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::LeftParen })),
 			')' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::RightParen })),
-			':' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::Colon })),
 			'.' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::Period })),
+			':' => Some(self.make_atom_token()),
 			'#' => {
 				match self.peek()? {
 					'(' => {
@@ -164,6 +164,14 @@ impl<'s> Lexer<'s> {
 		}
 
 		Ok(&self.source[self.start..self.idx])
+	}
+
+	/// Attempt to make an atom starting from the lexers current position
+	/// in the source
+	fn make_atom_token(&mut self) -> Result<Token<'s>, LexError> {
+		let atom = self.take_chars_while(|c| !Self::is_delimiter(c))?;
+
+		Ok(Token { span: (self.start, atom.len()).into(), t: TokenType::Atom(atom) })
 	}
 
 	/// Attempt to make a boolean starting from the lexers current position
@@ -403,10 +411,20 @@ impl<'s> Lexer<'s> {
 	/// Attempt to recognize identifiers as keywords
 	fn match_identifier(&self, id: &'s str) -> Token<'s> {
 		match id {
+			"Bottom" => Token { span: (self.start, id.len()).into(), t: TokenType::KwBottom },
+			"Tuple" => Token { span: (self.start, id.len()).into(), t: TokenType::KwTuple },
+			"List" => Token { span: (self.start, id.len()).into(), t: TokenType::KwList },
+			"Vector" => Token { span: (self.start, id.len()).into(), t: TokenType::KwVector },
+			"Funtion" => Token { span: (self.start, id.len()).into(), t: TokenType::KwFuntion },
+			"Sum" => Token { span: (self.start, id.len()).into(), t: TokenType::KwSum },
+			"Product" => Token { span: (self.start, id.len()).into(), t: TokenType::KwProduct },
+
 			"quote" => Token { span: (self.start, id.len()).into(), t: TokenType::KwQuote },
+			"let" => Token { span: (self.start, id.len()).into(), t: TokenType::KwLet },
+			"begin" => Token { span: (self.start, id.len()).into(), t: TokenType::KwBegin },
 			"lambda" => Token { span: (self.start, id.len()).into(), t: TokenType::KwLambda },
 			"if" => Token { span: (self.start, id.len()).into(), t: TokenType::KwIf },
-			"let" => Token { span: (self.start, id.len()).into(), t: TokenType::KwLet },
+
 			_ => Token { span: (self.start, id.len()).into(), t: TokenType::Identifier(id) },
 		}
 	}

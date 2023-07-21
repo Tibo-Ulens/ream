@@ -15,20 +15,29 @@ pub struct Token<'t> {
 pub enum TokenType<'t> {
 	Identifier(&'t str),
 
+	KwBottom,
+	KwTuple,
+	KwList,
+	KwVector,
+	KwFuntion,
+	KwSum,
+	KwProduct,
+
 	KwQuote,
+	KwLet,
+	KwBegin,
 	KwLambda,
 	KwIf,
-	KwLet,
 
 	Boolean(bool),
 	Integer(u64),
 	Float(f64),
 	Character(char),
 	String(&'t str),
+	Atom(&'t str),
 
 	LeftParen,
 	RightParen,
 	VecParen,
-	Colon,
 	Period,
 }
