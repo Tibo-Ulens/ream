@@ -57,7 +57,7 @@ expression = identifier
 	| conditional
 	| inclusion ;
 
-literal = quotation | boolean | integer | float | character | string | list ;
+literal = quotation | boolean | integer | float | character | string | atom | list ;
 quotation = ( "(", "quote", datum, ")" ) ;
 
 definition = "(", "let", identifier, expression ")" ;
