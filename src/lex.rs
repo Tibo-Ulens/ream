@@ -11,6 +11,7 @@ static NON_DECIMAL_FLOAT_LITERAL: &str =
 
 /// A lexer for a single source file
 #[allow(missing_docs)]
+#[derive(Clone)]
 pub struct Lexer<'s> {
 	source: &'s str,
 	chars:  Peekable<Chars<'s>>,
@@ -424,6 +425,7 @@ impl<'s> Lexer<'s> {
 			"begin" => Token { span: (self.start, id.len()).into(), t: TokenType::KwBegin },
 			"lambda" => Token { span: (self.start, id.len()).into(), t: TokenType::KwLambda },
 			"if" => Token { span: (self.start, id.len()).into(), t: TokenType::KwIf },
+			"include" => Token { span: (self.start, id.len()).into(), t: TokenType::KwInclude },
 
 			_ => Token { span: (self.start, id.len()).into(), t: TokenType::Identifier(id) },
 		}

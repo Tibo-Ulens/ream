@@ -28,6 +28,7 @@ pub enum TokenType<'t> {
 	KwBegin,
 	KwLambda,
 	KwIf,
+	KwInclude,
 
 	Boolean(bool),
 	Integer(u64),
