@@ -5,6 +5,7 @@
 #![feature(let_chains)]
 #![feature(type_alias_impl_trait)]
 
+pub mod ast;
 mod error;
 mod lex;
 mod parse;
