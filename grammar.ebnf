@@ -38,7 +38,7 @@ atom = ":", identifier ;
 (* SIMPLE SYNTACTICAL DEFINITIONS *)
 
 datum = identifier | boolean | integer | float | character | string | atom | list ;
-list = "(", { datum }, ")" | "(", ( datum, { datum } ), ".", datum ")" ;
+list = ( "(", { datum }, ")" ) | ( "(", datum, ".", list  ")" ) ;
 
 (* SYNTACTICAL DEFINITIONS *)
 
