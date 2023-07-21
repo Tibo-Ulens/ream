@@ -4,9 +4,9 @@ use std::io::Read;
 
 use clap::Parser as ArgParser;
 use miette::NamedSource;
-use ream::{Error, Lexer};
+use ream::{Error, Lexer, Parser};
 
-#[derive(ArgParser)]
+#[derive(ArgParser, Clone)]
 #[command(author, version, about, long_about=None)]
 struct Args {
 	/// The source file
@@ -15,6 +15,10 @@ struct Args {
 	/// How verbose the output should be
 	#[arg(short='v', long="verbose", action=clap::ArgAction::Count)]
 	verbosity: u8,
+
+	/// Whether or not to show the output of the lexer
+	#[arg(short = 'l', long = "lex")]
+	show_lex: bool,
 }
 
 fn main() -> miette::Result<()> {
@@ -26,20 +30,28 @@ fn main() -> miette::Result<()> {
 
 	let source: Cow<str> = source.into();
 
-	let named_source = NamedSource::new(args.source_file, source.clone());
+	let named_source = NamedSource::new(args.source_file.clone(), source.clone());
 
-	let lexer = Lexer::new(&source);
+	process_file(&source, &args).map_err(|err| err.with_source_code(named_source))
+}
 
-	let tokens = lexer
-		.into_iter()
-		.collect::<Result<Vec<_>, _>>()
-		.map_err(|err| err.with_source_code(named_source))?;
+/// Separate function that actually does all the work because miette decided
+/// that [`NamedSource`] didn't need to be [`Copy`] or [`Clone`] for some
+/// reason
+fn process_file(source: &str, args: &Args) -> miette::Result<()> {
+	let lexer = Lexer::new(source);
 
-	println!("{}", tokens.iter().map(|t| format!("{t:?}")).collect::<Vec<_>>().join("\n"));
+	if args.show_lex {
+		let tokens = lexer.clone().collect::<Result<Vec<_>, _>>()?;
 
-	// let parser = Parser::new(&source);
+		println!("{}", tokens.iter().map(|t| format!("{t:?}")).collect::<Vec<_>>().join("\n"));
+	}
 
-	// let _root = parser.parse().map_err(|err| err.with_source_code(named_source))?;
+	let token_iterator = lexer.peekable();
+
+	let parser = Parser::new(source, token_iterator);
+
+	let _root = parser.parse()?;
 
 	Ok(())
 }
