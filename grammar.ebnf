@@ -60,11 +60,11 @@ expression = identifier
 literal = quotation | boolean | integer | float | character | string | atom | list ;
 quotation = ( "(", "quote", datum, ")" ) ;
 
-definition = "(", "let", identifier, expression ")" ;
+definition = "(", "let", identifier, expression, ")" ;
 
-type_alias = "type-alias", identifier, typespec ;
+type_alias = "(", "type-alias", identifier, typespec, ")" ;
 
-algebraic_type_definition = "define-type", identifier, typespec ;
+algebraic_type_definition = "(", "define-type", identifier, typespec, ")" ;
 
 typespec = identifier | ( "(", type_constructor ")" ) ;
 
