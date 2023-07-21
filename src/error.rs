@@ -123,18 +123,3 @@ fn format_expected_tokens(ex: &[String]) -> String {
 		format!("one of {}", ex.iter().map(|e| format!("`{}`", e)).collect::<Vec<_>>().join(", "))
 	}
 }
-
-impl ParseError {
-	/// Join the info of 2 errors
-	pub fn join(self, other: Self) -> Self {
-		match (self, other) {
-			(
-				Self::UnexpectedToken { loc, found, mut expected },
-				Self::UnexpectedToken { expected: mut expected_other, .. },
-			) => {
-				expected.append(&mut expected_other);
-				Self::UnexpectedToken { loc, found, expected }
-			},
-		}
-	}
-}
