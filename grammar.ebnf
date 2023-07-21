@@ -16,12 +16,12 @@ comment = ";", { r"[^\n]*" } ;
 tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter }) ;
 
 token = identifier | boolean | integer | float | character | string | atom
-        | "(" | ")" | "#(" | "(:" | "." ;
+        | "(" | ")" | "#(" | "." ;
 
 delimiter = r"\s" | "(" | ")" | '"' | "'" | ";" ;
 
 identifier = identifier_inital | { identifier_subsequent } ;
-identifier_inital = ?UNICODE_XID_START? | r"[!$%&*/<=>?^_~+-]" ;
+identifier_inital = ?UNICODE_XID_START? | r"[!$%&*/<=>?^_~:+-]" ;
 identifier_subsequent = identifier_initial | ?UNICODE_XID_CONTINUE? | r"[0-9.@]" ;
 
 boolean = "#t" | "#f" | "#true" | "#false" ;
@@ -50,6 +50,7 @@ expression = identifier
 	| type_alias
 	| algebraic_type_definition
 	| type_annotation
+	| doc_annotation
 	| sequence
 	| procedure_call
 	| lambda_expression
@@ -81,7 +82,9 @@ type_constructor = "Bottom"
 
 named_typespec = atom, [ typespec ] ;
 
-type_annotation = "(:", identifier, typespec ")" ;
+type_annotation = "(", ":type", identifier, typespec ")" ;
+
+doc_annotation = "(", ":doc", identifier, string ")" ;
 
 sequence = "(", "begin", expression, { expression }, ")" ;
 
