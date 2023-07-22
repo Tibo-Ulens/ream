@@ -6,6 +6,7 @@
 (define-type Option (Sum (:Some A) :None))
 (define-type Pair   (Product (:0 A) (:1 A)))
 
+(:doc "Map an `Option A` to an `Option B`")
 (:type map-option (Function ((Option A) (Function A B)) (Option B)))
 (define map-option
 	(lambda (opt f)
