@@ -49,7 +49,7 @@ fn process_file(source: &str, args: &Args) -> miette::Result<()> {
 
 	let token_iterator = lexer.peekable();
 
-	let parser = Parser::new(source, token_iterator);
+	let mut parser = Parser::new(source, token_iterator);
 
 	let _root = parser.parse()?;
 

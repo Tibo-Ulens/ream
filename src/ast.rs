@@ -8,7 +8,7 @@ use crate::{Token, TokenType};
 
 /// A single ream program
 #[derive(Clone)]
-pub struct Program<'s>(Vec<Expression<'s>>);
+pub struct Program<'s>(pub Vec<Expression<'s>>);
 
 /// A single expression
 #[allow(missing_docs)]

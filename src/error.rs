@@ -21,7 +21,7 @@ pub enum Error {
 }
 
 /// Any error related to lexing
-#[derive(Debug, Diagnostic, Error)]
+#[derive(Clone, Debug, Diagnostic, Error)]
 pub enum LexError {
 	/// Unexpected end-of-file
 	#[allow(missing_docs)]
@@ -93,8 +93,17 @@ pub enum LexError {
 }
 
 /// Any error related to parsing
-#[derive(Debug, Diagnostic, Error)]
+#[derive(Clone, Debug, Diagnostic, Error)]
 pub enum ParseError {
+	/// Unexpected end-of-file
+	#[allow(missing_docs)]
+	#[error("Unexpected end-of-file")]
+	#[diagnostic(code(ream::parse_error::unexpected_eof))]
+	UnexpectedEof {
+		#[label = "here"]
+		loc: SourceSpan,
+	},
+
 	/// Expected one token, found another
 	#[allow(missing_docs)]
 	#[error("Unexpected Token: found `{found}`, expected {}", format_expected_tokens(expected))]

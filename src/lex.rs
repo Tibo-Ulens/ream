@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 use std::str::Chars;
 
-use miette::{Error, SourceSpan};
+use miette::SourceSpan;
 use unicode_xid::UnicodeXID;
 
 use crate::{LexError, Token, TokenType};
@@ -24,9 +24,9 @@ pub struct Lexer<'s> {
 }
 
 impl<'s> Iterator for Lexer<'s> {
-	type Item = Result<Token<'s>, Error>;
+	type Item = Result<Token<'s>, LexError>;
 
-	fn next(&mut self) -> Option<Self::Item> { self.lex_token().map(|r| r.map_err(Error::from)) }
+	fn next(&mut self) -> Option<Self::Item> { self.lex_token() }
 }
 
 impl<'s> Lexer<'s> {
@@ -93,16 +93,12 @@ impl<'s> Lexer<'s> {
 			':' => Some(self.make_atom_token()),
 			'#' => {
 				match self.peek()? {
-					'(' => {
-						self.next().unwrap(); // Unwrap is safe as peek is some
-						Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::VecParen }))
-					},
 					't' | 'f' => Some(self.make_boolean_token()),
 					&c => {
 						Some(Err(LexError::UnexpectedSymbol {
 							loc:      (self.start, 1).into(),
 							found:    c,
-							expected: vec!['(', 't', 'f'],
+							expected: vec!['t', 'f'],
 						}))
 					},
 				}
@@ -412,13 +408,21 @@ impl<'s> Lexer<'s> {
 	/// Attempt to recognize identifiers as keywords
 	fn match_identifier(&self, id: &'s str) -> Token<'s> {
 		match id {
-			"Bottom" => Token { span: (self.start, id.len()).into(), t: TokenType::KwBottom },
-			"Tuple" => Token { span: (self.start, id.len()).into(), t: TokenType::KwTuple },
-			"List" => Token { span: (self.start, id.len()).into(), t: TokenType::KwList },
-			"Vector" => Token { span: (self.start, id.len()).into(), t: TokenType::KwVector },
-			"Funtion" => Token { span: (self.start, id.len()).into(), t: TokenType::KwFuntion },
-			"Sum" => Token { span: (self.start, id.len()).into(), t: TokenType::KwSum },
-			"Product" => Token { span: (self.start, id.len()).into(), t: TokenType::KwProduct },
+			"Bottom" => {
+				Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwBottom }
+			},
+			"Tuple" => Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwTuple },
+			"List" => Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwList },
+			"Vector" => {
+				Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwVector }
+			},
+			"Funtion" => {
+				Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwFuntion }
+			},
+			"Sum" => Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwSum },
+			"Product" => {
+				Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwProduct }
+			},
 
 			"quote" => Token { span: (self.start, id.len()).into(), t: TokenType::KwQuote },
 			"let" => Token { span: (self.start, id.len()).into(), t: TokenType::KwLet },
