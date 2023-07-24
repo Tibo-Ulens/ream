@@ -46,6 +46,7 @@ pub enum TokenType<'t> {
 	LeftParen,
 	RightParen,
 	Period,
+	Backtick,
 
 	EndOfFile,
 }
@@ -76,6 +77,7 @@ impl<'t> fmt::Display for TokenType<'t> {
 			Self::LeftParen => write!(f, "("),
 			Self::RightParen => write!(f, ")"),
 			Self::Period => write!(f, "."),
+			Self::Backtick => write!(f, "`"),
 			Self::EndOfFile => write!(f, "EOF"),
 		}
 	}
@@ -108,6 +110,7 @@ impl<'t> TokenType<'t> {
 			Self::LeftParen => "LeftParen".to_string(),
 			Self::RightParen => "RightParen".to_string(),
 			Self::Period => "Period".to_string(),
+			Self::Backtick => "Backtick".to_string(),
 			Self::EndOfFile => "EndOfFile".to_string(),
 		}
 	}

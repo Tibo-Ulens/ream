@@ -74,7 +74,7 @@ impl<'s> Lexer<'s> {
 
 	/// Check if a character is a delimiter
 	fn is_delimiter(c: char) -> bool {
-		c.is_whitespace() || c == '(' || c == ')' || c == '"' || c == '\'' || c == ';'
+		c.is_whitespace() || c == '(' || c == ')' || c == '"' || c == '\'' || c == ';' || c == '`'
 	}
 
 	/// Lex a single token
@@ -90,6 +90,7 @@ impl<'s> Lexer<'s> {
 			'(' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::LeftParen })),
 			')' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::RightParen })),
 			'.' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::Period })),
+			'`' => Some(Ok(Token { span: (self.start, 1).into(), t: TokenType::Backtick })),
 			':' => Some(self.make_atom_token()),
 			'#' => {
 				match self.peek()? {
