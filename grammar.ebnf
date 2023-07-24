@@ -16,7 +16,7 @@ comment = ";", { r"[^\n]*" } ;
 tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter }) ;
 
 token = identifier | boolean | integer | float | character | string | atom
-        | "(" | ")" | "#(" | "." ;
+        | "(" | ")" | "." ;
 
 delimiter = r"\s" | "(" | ")" | '"' | "'" | ";" ;
 
