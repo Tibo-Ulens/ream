@@ -51,7 +51,9 @@ fn process_file(source: &str, args: &Args) -> miette::Result<()> {
 
 	let mut parser = Parser::new(source, token_iterator);
 
-	let _root = parser.parse()?;
+	let root = parser.parse()?;
+
+	println!("{:#?}", root);
 
 	Ok(())
 }

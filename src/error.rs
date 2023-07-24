@@ -115,6 +115,17 @@ pub enum ParseError {
 		found:    String,
 		expected: Vec<String>,
 	},
+
+	/// Invalid annotation type
+	#[allow(missing_docs)]
+	#[error("Invalid Annotation Type: found `{found}`, expected one of `:type`, `:doc`")]
+	#[diagnostic(code(ream::parse_error::invalid_annotation))]
+	InvalidAnnotation {
+		#[label = "here"]
+		loc: SourceSpan,
+
+		found: String,
+	},
 }
 
 fn format_expected_symbols(ex: &[char]) -> String {

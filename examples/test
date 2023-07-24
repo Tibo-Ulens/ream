@@ -1,0 +1,2 @@
+(:doc foo "this is a doc annotation for foo")
+foo

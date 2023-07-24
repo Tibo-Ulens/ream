@@ -7,12 +7,12 @@ use miette::SourceSpan;
 use crate::{Token, TokenType};
 
 /// A single ream program
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Program<'s>(pub Vec<Expression<'s>>);
 
 /// A single expression
 #[allow(missing_docs)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expression<'s> {
 	Identifier(Identifier<'s>),
 	Literal(Literal<'s>),
@@ -31,16 +31,7 @@ pub enum Expression<'s> {
 		target: Identifier<'s>,
 		spec:   TypeSpec<'s>,
 	},
-	TypeAnnotation {
-		span:   SourceSpan,
-		target: Identifier<'s>,
-		spec:   TypeSpec<'s>,
-	},
-	DocAnnotation {
-		span:   SourceSpan,
-		target: Identifier<'s>,
-		doc:    &'s str,
-	},
+	Annotation(Annotation<'s>),
 	Sequence {
 		span: SourceSpan,
 		seq:  Vec<Expression<'s>>,
@@ -77,7 +68,7 @@ impl<'s> From<Literal<'s>> for Expression<'s> {
 
 /// A single identifier
 #[allow(missing_docs)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Identifier<'s> {
 	span: SourceSpan,
 	id:   &'s str,
@@ -94,7 +85,7 @@ impl<'s> From<Token<'s>> for Identifier<'s> {
 
 /// A literal value
 #[allow(missing_docs)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Literal<'s> {
 	Quotation { span: SourceSpan, q: Datum<'s> },
 	Boolean { span: SourceSpan, b: bool },
@@ -129,7 +120,7 @@ impl<'s> From<Token<'s>> for Literal<'s> {
 
 /// A datum
 #[allow(missing_docs)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Datum<'s> {
 	Identifier { span: SourceSpan, id: &'s str },
 	Boolean { span: SourceSpan, b: bool },
@@ -156,9 +147,17 @@ impl<'s> From<Token<'s>> for Datum<'s> {
 	}
 }
 
+/// An annotation for an item
+#[allow(missing_docs)]
+#[derive(Clone, Debug)]
+pub enum Annotation<'s> {
+	TypeAnnotation { span: SourceSpan, target: Identifier<'s>, spec: TypeSpec<'s> },
+	DocAnnotation { span: SourceSpan, target: Identifier<'s>, doc: &'s str },
+}
+
 /// A type specification
 #[allow(missing_docs)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TypeSpec<'s> {
 	Identifier(Identifier<'s>),
 	Constructor(TypeConstructor<'s>),
@@ -174,7 +173,7 @@ impl<'s> From<TypeConstructor<'s>> for TypeSpec<'s> {
 
 /// A type constructor
 #[allow(missing_docs)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TypeConstructor<'s> {
 	Bottom { span: SourceSpan },
 	Tuple { span: SourceSpan, fields: Vec<TypeSpec<'s>> },
@@ -187,7 +186,7 @@ pub enum TypeConstructor<'s> {
 
 /// A named (labeled) type specification
 #[allow(missing_docs)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NamedTypeSpec<'s> {
 	span: SourceSpan,
 	name: Literal<'s>,

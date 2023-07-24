@@ -1,6 +1,11 @@
 use std::fmt;
+use std::sync::LazyLock;
 
 use miette::SourceSpan;
+
+/// Premade EndOfFile token that can be inserted by the parser
+pub static EOF_TOKEN: LazyLock<Token> =
+	LazyLock::new(|| Token { span: (0, 0).into(), t: TokenType::EndOfFile });
 
 /// A single source code token
 #[derive(Clone, Copy, Debug)]
@@ -15,8 +20,6 @@ pub struct Token<'t> {
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TokenType<'t> {
-	Identifier(&'t str),
-
 	TypeKwBottom,
 	TypeKwTuple,
 	TypeKwList,
@@ -32,6 +35,7 @@ pub enum TokenType<'t> {
 	KwIf,
 	KwInclude,
 
+	Identifier(&'t str),
 	Boolean(bool),
 	Integer(u64),
 	Float(f64),
@@ -42,12 +46,13 @@ pub enum TokenType<'t> {
 	LeftParen,
 	RightParen,
 	Period,
+
+	EndOfFile,
 }
 
 impl<'t> fmt::Display for TokenType<'t> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-			Self::Identifier(id) => write!(f, "{id}"),
 			Self::TypeKwBottom => write!(f, "Bottom"),
 			Self::TypeKwTuple => write!(f, "Tuple"),
 			Self::TypeKwList => write!(f, "List"),
@@ -61,6 +66,7 @@ impl<'t> fmt::Display for TokenType<'t> {
 			Self::KwLambda => write!(f, "lambda"),
 			Self::KwIf => write!(f, "if"),
 			Self::KwInclude => write!(f, "include"),
+			Self::Identifier(id) => write!(f, "{id}"),
 			Self::Boolean(b) => write!(f, "{b}"),
 			Self::Integer(i) => write!(f, "{i}"),
 			Self::Float(fl) => write!(f, "{fl}"),
@@ -70,6 +76,7 @@ impl<'t> fmt::Display for TokenType<'t> {
 			Self::LeftParen => write!(f, "("),
 			Self::RightParen => write!(f, ")"),
 			Self::Period => write!(f, "."),
+			Self::EndOfFile => write!(f, "EOF"),
 		}
 	}
 }
@@ -78,7 +85,6 @@ impl<'t> TokenType<'t> {
 	/// Get the name of this [`TokenType`]
 	pub fn name(&self) -> String {
 		match self {
-			Self::Identifier(_) => "Identifier".to_string(),
 			Self::TypeKwBottom => "Bottom".to_string(),
 			Self::TypeKwTuple => "Tuple".to_string(),
 			Self::TypeKwList => "List".to_string(),
@@ -92,6 +98,7 @@ impl<'t> TokenType<'t> {
 			Self::KwLambda => "lambda".to_string(),
 			Self::KwIf => "if".to_string(),
 			Self::KwInclude => "include".to_string(),
+			Self::Identifier(_) => "Identifier".to_string(),
 			Self::Boolean(_) => "Boolean".to_string(),
 			Self::Integer(_) => "Integer".to_string(),
 			Self::Float(_) => "Float".to_string(),
@@ -101,6 +108,7 @@ impl<'t> TokenType<'t> {
 			Self::LeftParen => "LeftParen".to_string(),
 			Self::RightParen => "RightParen".to_string(),
 			Self::Period => "Period".to_string(),
+			Self::EndOfFile => "EndOfFile".to_string(),
 		}
 	}
 }
