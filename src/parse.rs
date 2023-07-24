@@ -4,7 +4,7 @@ use std::iter::Peekable;
 
 use miette::{Error, SourceSpan};
 
-use crate::{ast, Lexer, ParseError, Token, TokenType, EOF_TOKEN};
+use crate::{ast, Combine, Lexer, ParseError, Token, TokenType, EOF_TOKEN};
 
 /// A parser for a single source file
 #[allow(missing_docs)]
@@ -203,16 +203,11 @@ impl<'s> Parser<'s> {
 
 		let right_paren = self.expect(TokenType::RightParen)?;
 
-		let span_start = left_paren.span.offset();
-		let span_len = [left_paren, type_token, &target, &doc_token, &right_paren]
+		let span = [left_paren, type_token, &target, &doc_token, &right_paren]
 			.iter()
-			.map(|t| t.span.len())
-			.sum();
+			.map(|t| t.span)
+			.fold((0, 0).into(), |acc: SourceSpan, s| acc.combine(&s));
 
-		Ok(ast::Annotation::DocAnnotation {
-			span: (span_start, span_len).into(),
-			target: target.into(),
-			doc,
-		})
+		Ok(ast::Annotation::DocAnnotation { span, target: target.into(), doc })
 	}
 }
