@@ -16,9 +16,9 @@ comment = ";", { r"[^\n]*" } ;
 tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter }) ;
 
 token = identifier | boolean | integer | float | character | string | atom
-        | "(" | ")" | "." ;
+        | "(" | ")" | "." | "`" ;
 
-delimiter = r"\s" | "(" | ")" | '"' | "'" | ";" ;
+delimiter = r"\s" | "(" | ")" | '"' | "'" | ";" | "`" ;
 
 identifier = identifier_inital | { identifier_subsequent } ;
 identifier_inital = ?UNICODE_XID_START? | r"[!$%&*/<=>?^_~:+-]" ;
@@ -58,7 +58,7 @@ expression = identifier
 	| inclusion ;
 
 literal = quotation | boolean | integer | float | character | string | atom ;
-quotation = ( "(", "quote", datum, ")" ) ;
+quotation = ( "(", "quote", datum, ")" ) | ( "`", datum ) ;
 
 definition = "(", "let", identifier, expression, ")" ;
 
