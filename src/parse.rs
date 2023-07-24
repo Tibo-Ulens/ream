@@ -85,42 +85,22 @@ impl<'s> Parser<'s> {
 
 	/// Parse any expression
 	fn parse_expression(&mut self) -> Result<ast::Expression<'s>, Error> {
-		match self.peek()?.t {
-			TokenType::Identifier(_) => {
-				let id = self.next().unwrap();
-				Ok(ast::Expression::Identifier(id.into()))
-			},
-			TokenType::Boolean(_) => {
-				let b = self.next().unwrap();
-				Ok(ast::Expression::Literal(b.into()))
-			},
-			TokenType::Integer(_) => {
-				let i = self.next().unwrap();
-				Ok(ast::Expression::Literal(i.into()))
-			},
-			TokenType::Float(_) => {
-				let f = self.next().unwrap();
-				Ok(ast::Expression::Literal(f.into()))
-			},
-			TokenType::Character(_) => {
-				let c = self.next().unwrap();
-				Ok(ast::Expression::Literal(c.into()))
-			},
-			TokenType::String(_) => {
-				let s = self.next().unwrap();
-				Ok(ast::Expression::Literal(s.into()))
-			},
-			TokenType::Atom(_) => {
-				let a = self.next().unwrap();
-				Ok(ast::Expression::Literal(a.into()))
-			},
-			TokenType::LeftParen => self.parse_parenthesized_expression(),
+		let token = self.next()?;
+
+		match token.t {
+			TokenType::Identifier(_) => Ok(ast::Expression::Identifier(token.into())),
+			TokenType::Boolean(_) => Ok(ast::Expression::Literal(token.into())),
+			TokenType::Integer(_) => Ok(ast::Expression::Literal(token.into())),
+			TokenType::Float(_) => Ok(ast::Expression::Literal(token.into())),
+			TokenType::Character(_) => Ok(ast::Expression::Literal(token.into())),
+			TokenType::String(_) => Ok(ast::Expression::Literal(token.into())),
+			TokenType::Atom(_) => Ok(ast::Expression::Literal(token.into())),
+			TokenType::LeftParen => self.parse_parenthesized_expression(&token),
 
 			// EndOfFile is unreachable as it's filtered out in the loop in `self.parse()`
 			TokenType::EndOfFile => unreachable!(),
 
 			tt => {
-				let token = self.next().unwrap();
 				Err(ParseError::UnexpectedToken {
 					loc:      token.span,
 					found:    tt.to_string(),
@@ -141,13 +121,13 @@ impl<'s> Parser<'s> {
 	}
 
 	/// Parse any expression that starts with an opening parenthesis
-	fn parse_parenthesized_expression(&mut self) -> Result<ast::Expression<'s>, Error> {
-		// Unwrap is safe as it is checked in `self.parse_expression`
-		let opening_parenthesis = self.next().unwrap();
-
+	fn parse_parenthesized_expression(
+		&mut self,
+		left_paren: &Token<'s>,
+	) -> Result<ast::Expression<'s>, Error> {
 		match self.peek()?.t {
 			TokenType::Atom(_) => {
-				let annotation = self.parse_annotation(&opening_parenthesis)?;
+				let annotation = self.parse_annotation(left_paren)?;
 
 				Ok(ast::Expression::Annotation(annotation))
 			},
