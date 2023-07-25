@@ -66,6 +66,10 @@ impl<'s> From<Literal<'s>> for Expression<'s> {
 	fn from(value: Literal<'s>) -> Self { Self::Literal(value) }
 }
 
+impl<'s> From<Annotation<'s>> for Expression<'s> {
+	fn from(value: Annotation<'s>) -> Self { Self::Annotation(value) }
+}
+
 /// A single identifier
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug)]
