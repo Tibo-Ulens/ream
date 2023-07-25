@@ -414,9 +414,6 @@ impl<'s> Lexer<'s> {
 			},
 			"Tuple" => Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwTuple },
 			"List" => Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwList },
-			"Vector" => {
-				Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwVector }
-			},
 			"Funtion" => {
 				Token { span: (self.start, id.len()).into(), t: TokenType::TypeKwFuntion }
 			},

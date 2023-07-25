@@ -71,7 +71,6 @@ typespec = identifier | ( "(", type_constructor ")" ) ;
 type_constructor = "Bottom"
 	| ( "Tuple", { typespec } )
 	| ( "List", typespec )
-	| ( "Vector", typespec )
 	| (
 		"Function",
 		( typespec | "(", typespec, { typespec }, ")" ),
