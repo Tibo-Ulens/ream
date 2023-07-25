@@ -98,7 +98,6 @@ pub enum Literal<'s> {
 	Character { span: SourceSpan, c: char },
 	String { span: SourceSpan, s: &'s str },
 	Atom { span: SourceSpan, a: &'s str },
-	List { span: SourceSpan, l: Vec<Datum<'s>> },
 }
 
 impl<'s> Token<'s> {
