@@ -1,2 +1,10 @@
 (:doc foo "this is a doc annotation for foo")
 foo
+
+`((1 . (2 . ())) . ((3 . (4 . ())) . ()))
+
+(quote (
+	(1 . (2 . ()))
+	. (
+		(3 . (4 . ()))
+		. ())))
