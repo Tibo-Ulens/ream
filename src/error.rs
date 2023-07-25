@@ -95,6 +95,15 @@ pub enum LexError {
 /// Any error related to parsing
 #[derive(Clone, Debug, Diagnostic, Error)]
 pub enum ParseError {
+	/// Error for testing
+	#[allow(missing_docs)]
+	#[error("test {loc:?}")]
+	#[diagnostic(code(ream::test))]
+	Test {
+		#[label = "here"]
+		loc: SourceSpan,
+	},
+
 	/// Unexpected end-of-file
 	#[allow(missing_docs)]
 	#[error("Unexpected end-of-file")]
@@ -116,11 +125,37 @@ pub enum ParseError {
 		expected: Vec<String>,
 	},
 
+	/// Invalid expression
+	#[allow(missing_docs)]
+	#[error("Invalid Expression: found `{found}`, expected {}", format_expected_tokens(expected))]
+	#[diagnostic(code(ream::parse_error::invalid_expression))]
+	InvalidExpression {
+		#[label = "here"]
+		loc: SourceSpan,
+
+		found:    String,
+		expected: Vec<String>,
+	},
+
 	/// Invalid annotation type
 	#[allow(missing_docs)]
 	#[error("Invalid Annotation Type: found `{found}`, expected one of `:type`, `:doc`")]
 	#[diagnostic(code(ream::parse_error::invalid_annotation))]
 	InvalidAnnotation {
+		#[label = "here"]
+		loc: SourceSpan,
+
+		found: String,
+	},
+
+	/// Invalid Datum
+	#[allow(missing_docs)]
+	#[error(
+		"Invalid Datum: found `{found}`, expected one of `Identifier`, `Boolean`, `Integer`, \
+		 `Float`, `Character`, `String`, `Atom`, `(`"
+	)]
+	#[diagnostic(code(ream::parse_error::datum))]
+	InvalidDatum {
 		#[label = "here"]
 		loc: SourceSpan,
 

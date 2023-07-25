@@ -32,7 +32,7 @@ impl Combine for SourceSpan {
 		// the length of the second span
 		let first_len = self.len() as isize;
 		let len =
-			first_len + (other.offset() as isize - (start + first_len - 1)) + other.len() as isize;
+			first_len + (other.offset() as isize - (start + first_len)) + other.len() as isize;
 
 		(start as usize, len as usize).into()
 	}

@@ -7,6 +7,7 @@ use miette::{Error, SourceSpan};
 use crate::{ast, Combine, Lexer, ParseError, Token, TokenType, EOF_TOKEN};
 
 mod annotation;
+mod quote;
 
 /// A parser for a single source file
 #[allow(missing_docs)]
@@ -74,11 +75,11 @@ impl<'s> Parser<'s> {
 
 	/// Parse the entire input
 	pub fn parse(&mut self) -> Result<ast::Program<'s>, Error> {
-		let initial_span: SourceSpan = (0, 0).into();
+		// let initial_span: SourceSpan = (0, 0).into();
 		let mut exprs = vec![];
 
 		while self.peek()?.t != TokenType::EndOfFile {
-			let expr = self.parse_expression(initial_span)?;
+			let expr = self.parse_expression()?;
 
 			exprs.push(expr);
 		}
@@ -87,10 +88,10 @@ impl<'s> Parser<'s> {
 	}
 
 	/// Parse any expression
-	fn parse_expression(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
+	fn parse_expression(&mut self) -> Result<ast::Expression<'s>, Error> {
 		let token = self.next()?;
 
-		let new_span = initial_span.combine(&token.span);
+		let initial_span = token.span;
 
 		match token.t {
 			TokenType::Identifier(_) => Ok(ast::Expression::Identifier(token.into())),
@@ -101,13 +102,15 @@ impl<'s> Parser<'s> {
 			TokenType::String(_) => Ok(ast::Expression::Literal(token.into())),
 			TokenType::Atom(_) => Ok(ast::Expression::Literal(token.into())),
 
-			TokenType::LeftParen => self.parse_parenthesized_expression(new_span),
+			TokenType::Backtick => Ok(self.parse_shorthand_quote(initial_span)?.into()),
+
+			TokenType::LeftParen => self.parse_parenthesized_expression(initial_span),
 
 			// EndOfFile is unreachable as it's filtered out in the loop in `self.parse()`
 			TokenType::EndOfFile => unreachable!(),
 
 			tt => {
-				Err(ParseError::UnexpectedToken {
+				Err(ParseError::InvalidExpression {
 					loc:      token.span,
 					found:    tt.to_string(),
 					expected: vec![
@@ -137,13 +140,10 @@ impl<'s> Parser<'s> {
 
 		match token.t {
 			TokenType::Atom(annotation_type) => {
-				let annotation = self.parse_annotation(new_span, annotation_type)?;
-
-				Ok(ast::Expression::Annotation(annotation))
+				Ok(self.parse_annotation(new_span, annotation_type)?.into())
 			},
 
-			TokenType::Backtick => todo!(),
-			TokenType::KwQuote => todo!(),
+			TokenType::KwQuote => Ok(self.parse_quote(new_span)?.into()),
 			TokenType::KwLet => todo!(),
 			TokenType::KwBegin => todo!(),
 			TokenType::KwLambda => todo!(),
