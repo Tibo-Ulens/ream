@@ -154,7 +154,7 @@ pub enum ParseError {
 		"Invalid Datum: found `{found}`, expected one of `Identifier`, `Boolean`, `Integer`, \
 		 `Float`, `Character`, `String`, `Atom`, `(`"
 	)]
-	#[diagnostic(code(ream::parse_error::datum))]
+	#[diagnostic(code(ream::parse_error::invalid_datum))]
 	InvalidDatum {
 		#[label = "here"]
 		loc: SourceSpan,
