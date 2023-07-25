@@ -72,10 +72,11 @@ impl<'s> Parser<'s> {
 
 	/// Parse the entire input
 	pub fn parse(&mut self) -> Result<ast::Program<'s>, Error> {
+		let initial_span: SourceSpan = (0, 0).into();
 		let mut exprs = vec![];
 
 		while self.peek()?.t != TokenType::EndOfFile {
-			let expr = self.parse_expression()?;
+			let expr = self.parse_expression(initial_span)?;
 
 			exprs.push(expr);
 		}
@@ -84,8 +85,10 @@ impl<'s> Parser<'s> {
 	}
 
 	/// Parse any expression
-	fn parse_expression(&mut self) -> Result<ast::Expression<'s>, Error> {
+	fn parse_expression(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
 		let token = self.next()?;
+
+		let new_span = initial_span.combine(&token.span);
 
 		match token.t {
 			TokenType::Identifier(_) => Ok(ast::Expression::Identifier(token.into())),
@@ -95,7 +98,8 @@ impl<'s> Parser<'s> {
 			TokenType::Character(_) => Ok(ast::Expression::Literal(token.into())),
 			TokenType::String(_) => Ok(ast::Expression::Literal(token.into())),
 			TokenType::Atom(_) => Ok(ast::Expression::Literal(token.into())),
-			TokenType::LeftParen => self.parse_parenthesized_expression(&token),
+
+			TokenType::LeftParen => self.parse_parenthesized_expression(new_span),
 
 			// EndOfFile is unreachable as it's filtered out in the loop in `self.parse()`
 			TokenType::EndOfFile => unreachable!(),
@@ -123,14 +127,27 @@ impl<'s> Parser<'s> {
 	/// Parse any expression that starts with an opening parenthesis
 	fn parse_parenthesized_expression(
 		&mut self,
-		left_paren: &Token<'s>,
+		initial_span: SourceSpan,
 	) -> Result<ast::Expression<'s>, Error> {
-		match self.peek()?.t {
-			TokenType::Atom(_) => {
-				let annotation = self.parse_annotation(left_paren)?;
+		let token = self.next()?;
+
+		let new_span = initial_span.combine(&token.span);
+
+		match token.t {
+			TokenType::Atom(annotation_type) => {
+				let annotation = self.parse_annotation(new_span, annotation_type)?;
 
 				Ok(ast::Expression::Annotation(annotation))
 			},
+
+			TokenType::Backtick => todo!(),
+			TokenType::KwQuote => todo!(),
+			TokenType::KwLet => todo!(),
+			TokenType::KwBegin => todo!(),
+			TokenType::KwLambda => todo!(),
+			TokenType::KwIf => todo!(),
+			TokenType::KwInclude => todo!(),
+
 			tt => {
 				let token = self.next().unwrap();
 				Err(ParseError::UnexpectedToken {
@@ -144,16 +161,17 @@ impl<'s> Parser<'s> {
 	}
 
 	/// Parse an annotation of the form `(:<atom> <identifier> ...)
-	fn parse_annotation(&mut self, left_paren: &Token<'s>) -> Result<ast::Annotation<'s>, Error> {
-		let annotation_type_token = self.expect(TokenType::Atom(""))?;
-		let TokenType::Atom(annotation_type) = annotation_type_token.t else { unreachable!() };
-
+	fn parse_annotation(
+		&mut self,
+		initial_span: SourceSpan,
+		annotation_type: &'s str,
+	) -> Result<ast::Annotation<'s>, Error> {
 		match annotation_type {
-			":type" => self.parse_type_annotation(left_paren, &annotation_type_token),
-			":doc" => self.parse_doc_annotation(left_paren, &annotation_type_token),
+			":type" => self.parse_type_annotation(initial_span),
+			":doc" => self.parse_doc_annotation(initial_span),
 			_ => {
 				Err(ParseError::InvalidAnnotation {
-					loc:   annotation_type_token.span,
+					loc:   initial_span,
 					found: annotation_type.to_string(),
 				}
 				.into())
@@ -164,8 +182,7 @@ impl<'s> Parser<'s> {
 	/// Parse a type annotation of the form `(:type <identifier> <typespec>)`
 	fn parse_type_annotation(
 		&mut self,
-		_left_paren: &Token<'s>,
-		_type_token: &Token<'s>,
+		_initial_span: SourceSpan,
 	) -> Result<ast::Annotation<'s>, Error> {
 		todo!()
 	}
@@ -173,21 +190,20 @@ impl<'s> Parser<'s> {
 	/// Parse a doc annotation of the form `(:doc <identifier> <docstring>)`
 	fn parse_doc_annotation(
 		&mut self,
-		left_paren: &Token<'s>,
-		type_token: &Token<'s>,
+		initial_span: SourceSpan,
 	) -> Result<ast::Annotation<'s>, Error> {
 		let target = self.expect(TokenType::Identifier(""))?;
 
-		let doc_token = self.expect(TokenType::String(""))?;
-		let TokenType::String(doc) = doc_token.t else { unreachable!() };
+		let doc_str_token = self.expect(TokenType::String(""))?;
+		let TokenType::String(doc_str) = doc_str_token.t else { unreachable!() };
 
 		let right_paren = self.expect(TokenType::RightParen)?;
 
-		let span = [left_paren, type_token, &target, &doc_token, &right_paren]
+		let span = [&target, &doc_str_token, &right_paren]
 			.iter()
 			.map(|t| t.span)
-			.fold((0, 0).into(), |acc: SourceSpan, s| acc.combine(&s));
+			.fold(initial_span, |acc, s| acc.combine(&s));
 
-		Ok(ast::Annotation::DocAnnotation { span, target: target.into(), doc })
+		Ok(ast::Annotation::DocAnnotation { span, target: target.into(), doc: doc_str })
 	}
 }
