@@ -147,7 +147,7 @@ impl<'s> Parser<'s> {
 			TokenType::KwLet => Ok(self.parse_definition(expression_span)?),
 			TokenType::KwBegin => Ok(self.parse_sequence(expression_span)?),
 			TokenType::KwLambda => Ok(self.parse_lambda(expression_span)?),
-			TokenType::KwIf => todo!(),
+			TokenType::KwIf => Ok(self.parse_conditional(expression_span)?),
 			TokenType::KwInclude => todo!(),
 
 			tt => {
@@ -250,5 +250,45 @@ impl<'s> Parser<'s> {
 		lambda_span = lambda_span.combine(&right_paren.span);
 
 		Ok(ast::Expression::LambdaExpression { span: lambda_span, formals, body })
+	}
+
+	/// Parse a conditional of the form `(if <test> <consequent> [<alternate>])`
+	/// where test is `<expression>`
+	/// consequent is `<expression>`
+	/// and alternate is `<expression>`
+	///
+	/// `(` and `if` already consumed
+	fn parse_conditional(
+		&mut self,
+		initial_span: SourceSpan,
+	) -> Result<ast::Expression<'s>, Error> {
+		let test = self.parse_expression()?;
+		let mut conditional_span = initial_span.combine(&self.prev_span);
+
+		let consequent = self.parse_expression()?;
+		conditional_span = conditional_span.combine(&self.prev_span);
+
+		let alternate = if self.peek()?.t == TokenType::RightParen {
+			// Unwrap is safe as peek is some
+			let right_paren = self.next().unwrap();
+			conditional_span = conditional_span.combine(&right_paren.span);
+
+			None
+		} else {
+			let expr = self.parse_expression()?;
+			conditional_span = conditional_span.combine(&self.prev_span);
+
+			let right_paren = self.expect(TokenType::RightParen)?;
+			conditional_span = conditional_span.combine(&right_paren.span);
+
+			Some(Box::new(expr))
+		};
+
+		Ok(ast::Expression::Conditional {
+			span: conditional_span,
+			test: Box::new(test),
+			consequent: Box::new(consequent),
+			alternate,
+		})
 	}
 }

@@ -1,1 +1,1 @@
-(let constant (lambda () 123))
+(let constant (lambda () (if #true 123)))
