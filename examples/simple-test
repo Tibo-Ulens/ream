@@ -20,7 +20,7 @@
 			`()
 			(append (rev (cdr l)) (car l)))))
 
-(define list (cons 3 (cons 2 (cons 1 ()))))
+(define list (cons 3 (cons 2 (cons 1 `()))))
 (define revlist (rev list))
 (print list)
 (print revlist)
