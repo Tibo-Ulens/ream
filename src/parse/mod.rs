@@ -159,7 +159,6 @@ impl<'s> Parser<'s> {
 			TokenType::KwInclude => Ok(self.parse_inclusion(expression_span)?),
 
 			tt => {
-				let token = self.next().unwrap();
 				Err(ParseError::UnexpectedToken {
 					loc:      token.span,
 					found:    tt.to_string(),
