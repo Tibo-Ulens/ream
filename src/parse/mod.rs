@@ -150,12 +150,18 @@ impl<'s> Parser<'s> {
 			TokenType::KwIf => Ok(self.parse_conditional(expression_span)?),
 			TokenType::KwInclude => Ok(self.parse_inclusion(expression_span)?),
 
+			TokenType::Identifier(_) => todo!(),
+
 			tt => {
 				let token = self.next().unwrap();
 				Err(ParseError::UnexpectedToken {
 					loc:      token.span,
 					found:    tt.to_string(),
-					expected: vec!["Atom".to_string(), "Keyword".to_string()],
+					expected: vec![
+						"Atom".to_string(),
+						"Keyword".to_string(),
+						"Identifier".to_string(),
+					],
 				}
 				.into())
 			},
