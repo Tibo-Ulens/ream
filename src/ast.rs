@@ -132,7 +132,7 @@ pub enum Datum<'s> {
 	Character { span: SourceSpan, c: char },
 	String { span: SourceSpan, s: &'s str },
 	Atom { span: SourceSpan, a: &'s str },
-	List { span: SourceSpan, l: Vec<Datum<'s>> },
+	List { span: SourceSpan, l: ConsList<'s> },
 }
 
 impl<'s> From<Token<'s>> for Datum<'s> {
@@ -147,6 +147,45 @@ impl<'s> From<Token<'s>> for Datum<'s> {
 			TokenType::Atom(a) => Self::Atom { span: value.span, a },
 			_ => unreachable!(),
 		}
+	}
+}
+
+/// A linked list of [`ConsCell`]s
+#[derive(Clone, Debug)]
+pub struct ConsList<'s> {
+	/// The head of the linked list
+	head: Option<Box<ConsCell<'s>>>,
+}
+
+/// A Cons cell used to define lists
+#[derive(Clone, Debug)]
+pub struct ConsCell<'s> {
+	/// The head/car of the cell
+	head: Datum<'s>,
+	/// The tail/cdr of the cell, can be empty
+	tail: Option<Box<ConsCell<'s>>>,
+}
+
+impl<'s> From<Vec<Datum<'s>>> for ConsList<'s> {
+	fn from(value: Vec<Datum<'s>>) -> Self {
+		let iter = value.into_iter();
+		let head = cons_to_vec_helper(iter);
+
+		Self { head }
+	}
+}
+
+/// Recursive function to change an iterator to a linked list
+fn cons_to_vec_helper<'s, I>(mut iter: I) -> Option<Box<ConsCell<'s>>>
+where
+	I: Iterator<Item = Datum<'s>>,
+{
+	if let Some(head) = iter.next() {
+		let tail = cons_to_vec_helper(iter);
+
+		Some(Box::new(ConsCell { head, tail }))
+	} else {
+		None
 	}
 }
 

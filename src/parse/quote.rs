@@ -50,7 +50,9 @@ impl<'s> Parser<'s> {
 			TokenType::LeftParen => {
 				let (data, data_span) = self.parse_datum_list(span)?;
 
-				Ok((ast::Datum::List { span: data_span, l: data }, data_span))
+				let list: ast::ConsList = data.into();
+
+				Ok((ast::Datum::List { span: data_span, l: list }, data_span))
 			},
 
 			tt => Err(ParseError::InvalidDatum { loc: token.span, found: tt.to_string() }.into()),
