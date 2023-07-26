@@ -1,1 +1,3 @@
+(include "foo" "bar")
+
 (let constant (lambda () (if #true 123)))

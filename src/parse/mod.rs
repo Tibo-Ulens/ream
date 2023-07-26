@@ -148,7 +148,7 @@ impl<'s> Parser<'s> {
 			TokenType::KwBegin => Ok(self.parse_sequence(expression_span)?),
 			TokenType::KwLambda => Ok(self.parse_lambda(expression_span)?),
 			TokenType::KwIf => Ok(self.parse_conditional(expression_span)?),
-			TokenType::KwInclude => todo!(),
+			TokenType::KwInclude => Ok(self.parse_inclusion(expression_span)?),
 
 			tt => {
 				let token = self.next().unwrap();
@@ -290,5 +290,30 @@ impl<'s> Parser<'s> {
 			consequent: Box::new(consequent),
 			alternate,
 		})
+	}
+
+	/// Parse an inclusion of the form `(include <string>+)`
+	///
+	/// `(` and `include` already consumed
+	fn parse_inclusion(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
+		let first_file_token = self.expect(TokenType::String(""))?;
+		let TokenType::String(first_file) = first_file_token.t else { unreachable!() };
+		let mut inclusion_span = initial_span.combine(&first_file_token.span);
+
+		let mut files = vec![first_file];
+
+		while self.peek()?.t != TokenType::RightParen {
+			let file_token = self.expect(TokenType::String(""))?;
+			let TokenType::String(file) = file_token.t else { unreachable!() };
+			inclusion_span = inclusion_span.combine(&file_token.span);
+
+			files.push(file);
+		}
+
+		// Unwrap is safe as RightParen is selected for in the loop
+		let right_paren = self.expect(TokenType::RightParen).unwrap();
+		inclusion_span = inclusion_span.combine(&right_paren.span);
+
+		Ok(ast::Expression::Inclusion { span: inclusion_span, files })
 	}
 }
