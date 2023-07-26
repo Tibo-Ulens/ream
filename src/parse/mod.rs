@@ -145,7 +145,7 @@ impl<'s> Parser<'s> {
 
 			TokenType::KwQuote => Ok(self.parse_quote(expression_span)?.into()),
 			TokenType::KwLet => Ok(self.parse_definition(expression_span)?),
-			TokenType::KwBegin => todo!(),
+			TokenType::KwBegin => Ok(self.parse_sequence(expression_span)?),
 			TokenType::KwLambda => todo!(),
 			TokenType::KwIf => todo!(),
 			TokenType::KwInclude => todo!(),
@@ -180,5 +180,24 @@ impl<'s> Parser<'s> {
 			target: target_token.into(),
 			value:  Box::new(value),
 		})
+	}
+
+	/// Parse a sequence of the form `(begin <expression>+)`
+	///
+	/// `(` and `begin` already consumed
+	fn parse_sequence(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
+		let mut exprs = vec![self.parse_expression()?];
+		let mut sequence_span = initial_span.combine(&self.prev_span);
+
+		while self.peek()?.t != TokenType::RightParen {
+			let expr = self.parse_expression()?;
+			exprs.push(expr);
+			sequence_span = sequence_span.combine(&self.prev_span);
+		}
+
+		let right_paren = self.expect(TokenType::RightParen).unwrap();
+		sequence_span = sequence_span.combine(&right_paren.span);
+
+		Ok(ast::Expression::Sequence { span: sequence_span, seq: exprs })
 	}
 }
