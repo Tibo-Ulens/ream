@@ -30,7 +30,11 @@ impl<'s> Parser<'s> {
 	fn peek(&mut self) -> Result<&Token<'s>, Error> {
 		match self.tokens.peek() {
 			Some(res) => Ok(res.as_ref().map_err(|e| e.clone())?),
-			None => Ok(&EOF_TOKEN),
+			None => {
+				Ok(EOF_TOKEN.get_or_init(|| {
+					Token { span: self.prev_span.increment(), t: TokenType::EndOfFile }
+				}))
+			},
 		}
 	}
 
@@ -143,14 +147,16 @@ impl<'s> Parser<'s> {
 				Ok(self.parse_annotation(expression_span, annotation_type)?.into())
 			},
 
+			TokenType::Identifier(_) => {
+				Ok(self.parse_procedure_call(expression_span, token.into())?)
+			},
+
 			TokenType::KwQuote => Ok(self.parse_quote(expression_span)?.into()),
 			TokenType::KwLet => Ok(self.parse_definition(expression_span)?),
 			TokenType::KwBegin => Ok(self.parse_sequence(expression_span)?),
 			TokenType::KwLambda => Ok(self.parse_lambda(expression_span)?),
 			TokenType::KwIf => Ok(self.parse_conditional(expression_span)?),
 			TokenType::KwInclude => Ok(self.parse_inclusion(expression_span)?),
-
-			TokenType::Identifier(_) => todo!(),
 
 			tt => {
 				let token = self.next().unwrap();
@@ -166,6 +172,32 @@ impl<'s> Parser<'s> {
 				.into())
 			},
 		}
+	}
+
+	/// Parse a procedure call of the form `(<operator> <operands>)`
+	/// where operator is `<identifier>
+	/// and operands is `<expression>*`
+	///
+	/// `(` and `<operator>` already consumed
+	fn parse_procedure_call(
+		&mut self,
+		initial_span: SourceSpan,
+		operator: ast::Identifier<'s>,
+	) -> Result<ast::Expression<'s>, Error> {
+		let mut operands = vec![];
+		let mut procedure_span = initial_span;
+
+		while self.peek()?.t != TokenType::RightParen {
+			let operand = self.parse_expression()?;
+			operands.push(operand);
+			procedure_span = procedure_span.combine(&self.prev_span);
+		}
+
+		// Unwrap is safe as RightParen is selected for in the loop
+		let right_paren = self.expect(TokenType::RightParen).unwrap();
+		procedure_span = procedure_span.combine(&right_paren.span);
+
+		Ok(ast::Expression::ProcedureCall { span: procedure_span, operator, operands })
 	}
 
 	/// Parse a definition of the form `(let <target> <value>)`

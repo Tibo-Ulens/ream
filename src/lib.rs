@@ -19,7 +19,11 @@ pub use parse::*;
 pub use token::*;
 
 trait Combine {
+	/// Combine two items into one
 	fn combine(&self, other: &Self) -> Self;
+
+	/// Increment an item
+	fn increment(&self) -> Self;
 }
 
 impl Combine for SourceSpan {
@@ -35,5 +39,12 @@ impl Combine for SourceSpan {
 			first_len + (other.offset() as isize - (start + first_len)) + other.len() as isize;
 
 		(start as usize, len as usize).into()
+	}
+
+	fn increment(&self) -> Self {
+		let start = self.offset() + self.len();
+		let len = 1;
+
+		(start, len).into()
 	}
 }

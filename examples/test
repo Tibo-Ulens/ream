@@ -1,3 +1,1 @@
-(include "foo" "bar")
-
-(let constant (lambda () (if #true 123)))
+(let add1 (lambda x (+ 1 x)))

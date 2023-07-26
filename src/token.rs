@@ -1,11 +1,10 @@
 use std::fmt;
-use std::sync::LazyLock;
+use std::sync::OnceLock;
 
 use miette::SourceSpan;
 
-/// Premade EndOfFile token that can be inserted by the parser
-pub static EOF_TOKEN: LazyLock<Token> =
-	LazyLock::new(|| Token { span: (0, 0).into(), t: TokenType::EndOfFile });
+/// Placeholder EndOfFile token that can be inserted by the parser
+pub static EOF_TOKEN: OnceLock<Token> = OnceLock::new();
 
 /// A single source code token
 #[derive(Clone, Copy, Debug)]
@@ -14,6 +13,14 @@ pub struct Token<'t> {
 	pub span: SourceSpan,
 	/// The type of the token
 	pub t:    TokenType<'t>,
+}
+
+impl<'t> Token<'t> {
+	/// Change the span of self
+	pub fn with_span(mut self, span: SourceSpan) -> Self {
+		self.span = span;
+		self
+	}
 }
 
 /// All possible types of [`Token`]s
