@@ -161,6 +161,17 @@ pub enum ParseError {
 
 		found: String,
 	},
+
+	/// Invalid Lambda Formals
+	#[allow(missing_docs)]
+	#[error("Invalid Lambda Formals: found `{found}`, expected one of `Identifier`, `(`")]
+	#[diagnostic(code(ream::parse_error::invalid_lambda_formals))]
+	InvalidLambdaFormals {
+		#[label = "here"]
+		loc: SourceSpan,
+
+		found: String,
+	},
 }
 
 fn format_expected_symbols(ex: &[char]) -> String {

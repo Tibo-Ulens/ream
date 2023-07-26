@@ -104,10 +104,10 @@ impl<'t> TokenType<'t> {
 			Self::Character(_) => "Character".to_string(),
 			Self::String(_) => "String".to_string(),
 			Self::Atom(_) => "Atom".to_string(),
-			Self::LeftParen => "LeftParen".to_string(),
-			Self::RightParen => "RightParen".to_string(),
-			Self::Period => "Period".to_string(),
-			Self::Backtick => "Backtick".to_string(),
+			Self::LeftParen => "(".to_string(),
+			Self::RightParen => ")".to_string(),
+			Self::Period => ".".to_string(),
+			Self::Backtick => "`".to_string(),
 			Self::EndOfFile => "EndOfFile".to_string(),
 		}
 	}

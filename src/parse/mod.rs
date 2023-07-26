@@ -66,8 +66,8 @@ impl<'s> Parser<'s> {
 		} else {
 			Err(ParseError::UnexpectedToken {
 				loc:      token.span,
-				found:    token.t.to_string(),
-				expected: vec![t.to_string()],
+				found:    token.t.name(),
+				expected: vec![t.name()],
 			}
 			.into())
 		}
@@ -146,7 +146,7 @@ impl<'s> Parser<'s> {
 			TokenType::KwQuote => Ok(self.parse_quote(expression_span)?.into()),
 			TokenType::KwLet => Ok(self.parse_definition(expression_span)?),
 			TokenType::KwBegin => Ok(self.parse_sequence(expression_span)?),
-			TokenType::KwLambda => todo!(),
+			TokenType::KwLambda => Ok(self.parse_lambda(expression_span)?),
 			TokenType::KwIf => todo!(),
 			TokenType::KwInclude => todo!(),
 
@@ -195,9 +195,57 @@ impl<'s> Parser<'s> {
 			sequence_span = sequence_span.combine(&self.prev_span);
 		}
 
+		// Unwrap is safe as RightParen is selected for in the loop
 		let right_paren = self.expect(TokenType::RightParen).unwrap();
 		sequence_span = sequence_span.combine(&right_paren.span);
 
 		Ok(ast::Expression::Sequence { span: sequence_span, seq: exprs })
+	}
+
+	/// Parse a lambda of the form `(lambda <formals> <body>)`
+	/// where formals is `<identifier>` or `(<identifier>*)`
+	/// and body is `<expression>+`
+	///
+	/// `(` and `lambda` already consumed
+	fn parse_lambda(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
+		let mut formals = vec![];
+		let next_token = self.next()?;
+		let mut lambda_span = initial_span.combine(&next_token.span);
+
+		match next_token.t {
+			TokenType::Identifier(_) => formals.push(next_token.into()),
+			TokenType::LeftParen => {
+				while self.peek()?.t != TokenType::RightParen {
+					let formal = self.expect(TokenType::Identifier(""))?;
+					lambda_span = lambda_span.combine(&formal.span);
+					formals.push(formal.into());
+				}
+
+				// Unwrap is safe as RightParen is selected for in the loop
+				let right_paren = self.expect(TokenType::RightParen).unwrap();
+				lambda_span = lambda_span.combine(&right_paren.span);
+			},
+			tt => {
+				return Err(ParseError::InvalidLambdaFormals {
+					loc:   next_token.span,
+					found: tt.to_string(),
+				}
+				.into());
+			},
+		}
+
+		let mut body = vec![];
+
+		while self.peek()?.t != TokenType::RightParen {
+			let expr = self.parse_expression()?;
+			body.push(expr);
+			lambda_span = lambda_span.combine(&self.prev_span);
+		}
+
+		// Unwrap is safe as RightParen is selected for in the loop
+		let right_paren = self.expect(TokenType::RightParen).unwrap();
+		lambda_span = lambda_span.combine(&right_paren.span);
+
+		Ok(ast::Expression::LambdaExpression { span: lambda_span, formals, body })
 	}
 }
