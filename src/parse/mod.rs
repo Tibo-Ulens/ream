@@ -91,7 +91,7 @@ impl<'s> Parser<'s> {
 	fn parse_expression(&mut self) -> Result<ast::Expression<'s>, Error> {
 		let token = self.next()?;
 
-		let initial_span = token.span;
+		let expression_span = token.span;
 
 		match token.t {
 			TokenType::Identifier(_) => Ok(ast::Expression::Identifier(token.into())),
@@ -102,9 +102,9 @@ impl<'s> Parser<'s> {
 			TokenType::String(_) => Ok(ast::Expression::Literal(token.into())),
 			TokenType::Atom(_) => Ok(ast::Expression::Literal(token.into())),
 
-			TokenType::Backtick => Ok(self.parse_shorthand_quote(initial_span)?.into()),
+			TokenType::Backtick => Ok(self.parse_shorthand_quote(expression_span)?.into()),
 
-			TokenType::LeftParen => self.parse_parenthesized_expression(initial_span),
+			TokenType::LeftParen => self.parse_parenthesized_expression(expression_span),
 
 			// EndOfFile is unreachable as it's filtered out in the loop in `self.parse()`
 			TokenType::EndOfFile => unreachable!(),
@@ -136,15 +136,15 @@ impl<'s> Parser<'s> {
 	) -> Result<ast::Expression<'s>, Error> {
 		let token = self.next()?;
 
-		let new_span = initial_span.combine(&token.span);
+		let expression_span = initial_span.combine(&token.span);
 
 		match token.t {
 			TokenType::Atom(annotation_type) => {
-				Ok(self.parse_annotation(new_span, annotation_type)?.into())
+				Ok(self.parse_annotation(expression_span, annotation_type)?.into())
 			},
 
-			TokenType::KwQuote => Ok(self.parse_quote(new_span)?.into()),
-			TokenType::KwLet => todo!(),
+			TokenType::KwQuote => Ok(self.parse_quote(expression_span)?.into()),
+			TokenType::KwLet => Ok(self.parse_definition(expression_span)?),
 			TokenType::KwBegin => todo!(),
 			TokenType::KwLambda => todo!(),
 			TokenType::KwIf => todo!(),
@@ -160,5 +160,25 @@ impl<'s> Parser<'s> {
 				.into())
 			},
 		}
+	}
+
+	/// Parse a definition of the form `(let <identifier> <expression>)`
+	///
+	/// `(` and `let` already consumed
+	fn parse_definition(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
+		let target_token = self.expect(TokenType::Identifier(""))?;
+		let mut definition_span = initial_span.combine(&target_token.span);
+
+		let value = self.parse_expression()?;
+		definition_span = definition_span.combine(&self.prev_span);
+
+		let right_paren = self.expect(TokenType::RightParen)?;
+		definition_span = definition_span.combine(&right_paren.span);
+
+		Ok(ast::Expression::Definition {
+			span:   definition_span,
+			target: target_token.into(),
+			value:  Box::new(value),
+		})
 	}
 }
