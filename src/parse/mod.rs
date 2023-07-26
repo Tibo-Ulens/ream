@@ -44,7 +44,9 @@ impl<'s> Parser<'s> {
 	fn next(&mut self) -> Result<Token<'s>, Error> {
 		let token_result = match self.tokens.next() {
 			Some(t) => t,
-			None => return Err(ParseError::UnexpectedEof { loc: self.prev_span }.into()),
+			None => {
+				return Err(ParseError::UnexpectedEof { loc: self.prev_span.increment() }.into());
+			},
 		};
 
 		match token_result {
@@ -133,7 +135,9 @@ impl<'s> Parser<'s> {
 		}
 	}
 
-	/// Parse any expression that starts with an opening parenthesis
+	/// Parse any expression that starts with a `(`
+	///
+	/// `(` already consumed
 	fn parse_parenthesized_expression(
 		&mut self,
 		initial_span: SourceSpan,
