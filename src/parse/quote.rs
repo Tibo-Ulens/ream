@@ -100,9 +100,7 @@ impl<'s> Parser<'s> {
 
 					let (rec_data, rec_span) = self.parse_datum_list(left_paren.span)?;
 
-					let rec_list = ast::Datum::List { span: rec_span, l: rec_data };
-
-					data.push(rec_list);
+					data.extend(rec_data);
 					span.combine(&rec_span);
 
 					let right_paren = self.expect(TokenType::RightParen)?;
