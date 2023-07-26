@@ -3,7 +3,8 @@ use miette::{Error, SourceSpan};
 use crate::{ast, Combine, ParseError, Parser, TokenType};
 
 impl<'s> Parser<'s> {
-	/// Parse an annotation of the form `(<atom> <identifier> ...)
+	/// Parse an annotation of the form `(<atom> <target> ...)
+	/// where target is `<identifier>`
 	///
 	/// `(` and `<atom>` already consumed
 	pub(super) fn parse_annotation(
@@ -24,7 +25,9 @@ impl<'s> Parser<'s> {
 		}
 	}
 
-	/// Parse a type annotation of the form `(:type <identifier> <typespec>)`
+	/// Parse a type annotation of the form `(:type <target> <typespec>)`
+	/// where target is `<identifier>`
+	/// and docstring is `<string>`
 	///
 	/// `(` and `:type` already consumed
 	fn parse_type_annotation(
@@ -34,7 +37,9 @@ impl<'s> Parser<'s> {
 		todo!()
 	}
 
-	/// Parse a doc annotation of the form `(:doc <identifier> <docstring>)`
+	/// Parse a doc annotation of the form `(:doc <target> <docstring>)`
+	/// where target is `<identifier>`
+	/// and docstring is `<string>`
 	///
 	/// `(` and `:doc` already consumed
 	fn parse_doc_annotation(

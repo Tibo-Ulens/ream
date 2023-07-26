@@ -162,7 +162,9 @@ impl<'s> Parser<'s> {
 		}
 	}
 
-	/// Parse a definition of the form `(let <identifier> <expression>)`
+	/// Parse a definition of the form `(let <target> <value>)`
+	/// where target is `<identifier>`
+	/// and value is `<expression>`
 	///
 	/// `(` and `let` already consumed
 	fn parse_definition(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
@@ -182,7 +184,8 @@ impl<'s> Parser<'s> {
 		})
 	}
 
-	/// Parse a sequence of the form `(begin <expression>+)`
+	/// Parse a sequence of the form `(begin <sequence>)`
+	/// where sequence is `<expression>+`
 	///
 	/// `(` and `begin` already consumed
 	fn parse_sequence(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
