@@ -79,7 +79,7 @@ type_constructor = "Bottom"
 	| ( "Sum", named_typespec, named_typespec, { named_typespec } )
 	| ( "Product", named_typespec, named_typespec, { named_typespec } ) ;
 
-named_typespec = atom, [ typespec ] ;
+named_typespec = atom | ( "(", atom, [ typespec ], ")" );
 
 type_annotation = "(", ":type", identifier, typespec ")" ;
 
