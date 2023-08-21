@@ -11,7 +11,7 @@
 (define map-option
 	(lambda (opt f)
 		(match opt
-			(:Some x (f x))
+			((:Some x) (f x))
 			(:None :None))))
 
 (:type largest-in-pair (Function (Pair Integer) Integer))
