@@ -55,5 +55,7 @@ fn process_file(source: &str, args: &Args) -> miette::Result<()> {
 
 	println!("{:#?}", root);
 
+	root.run()?;
+
 	Ok(())
 }

@@ -8,6 +8,7 @@
 
 pub mod ast;
 mod error;
+mod eval;
 mod lex;
 mod parse;
 mod token;

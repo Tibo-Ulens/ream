@@ -174,6 +174,39 @@ pub enum ParseError {
 	},
 }
 
+/// Any error related to evaluation
+#[derive(Clone, Debug, Diagnostic, Error)]
+pub enum EvalError {
+	#[allow(missing_docs)]
+	#[error("Could not find value for `{id}` in this scope")]
+	#[diagnostic(code(ream::eval_error::unknown_identifier))]
+	UnknownIdentifier {
+		#[label = "here"]
+		loc: SourceSpan,
+		id:  String,
+	},
+
+	#[allow(missing_docs)]
+	#[error("`{name}` is not a function")]
+	#[diagnostic(code(ream::eval_error::not_a_function))]
+	NotAFunction {
+		#[label = "here"]
+		loc:  SourceSpan,
+		name: String,
+	},
+
+	#[allow(missing_docs)]
+	#[error("`{callee}` takes {expected} arguments, got {found}")]
+	#[diagnostic(code(ream::eval_error::wrong_argument_count))]
+	WrongArgumentCount {
+		#[label = "here"]
+		loc:      SourceSpan,
+		callee:   String,
+		expected: usize,
+		found:    usize,
+	},
+}
+
 fn format_expected_symbols(ex: &[char]) -> String {
 	if ex.len() == 1 {
 		format!("`{}`", ex[0])

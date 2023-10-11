@@ -74,8 +74,8 @@ impl<'s> From<Annotation<'s>> for Expression<'s> {
 #[allow(missing_docs)]
 #[derive(Clone, Copy, Debug)]
 pub struct Identifier<'s> {
-	span: SourceSpan,
-	id:   &'s str,
+	pub span: SourceSpan,
+	pub id:   &'s str,
 }
 
 impl<'s> From<Token<'s>> for Identifier<'s> {
@@ -169,23 +169,46 @@ pub struct ConsCell<'s> {
 impl<'s> From<Vec<Datum<'s>>> for ConsList<'s> {
 	fn from(value: Vec<Datum<'s>>) -> Self {
 		let iter = value.into_iter();
-		let head = cons_to_vec_helper(iter);
+		let head = vec_to_cons_helper(iter);
 
 		Self { head }
 	}
 }
 
 /// Recursive function to change an iterator to a linked list
-fn cons_to_vec_helper<'s, I>(mut iter: I) -> Option<Box<ConsCell<'s>>>
+fn vec_to_cons_helper<'s, I>(mut iter: I) -> Option<Box<ConsCell<'s>>>
 where
 	I: Iterator<Item = Datum<'s>>,
 {
 	if let Some(head) = iter.next() {
-		let tail = cons_to_vec_helper(iter);
+		let tail = vec_to_cons_helper(iter);
 
 		Some(Box::new(ConsCell { head, tail }))
 	} else {
 		None
+	}
+}
+
+impl<'s> From<ConsList<'s>> for Vec<Datum<'s>> {
+	fn from(value: ConsList<'s>) -> Self {
+		let collector = vec![];
+		let Some(boxed_head) = value.head else {
+			return collector;
+		};
+
+		let head = *boxed_head;
+
+		cons_to_vec_helper(collector, head)
+	}
+}
+
+/// Recursive function to change a linked list to vec
+fn cons_to_vec_helper<'s>(mut collector: Vec<Datum<'s>>, list: ConsCell<'s>) -> Vec<Datum<'s>> {
+	collector.push(list.head);
+
+	match list.tail {
+		Some(cell) => cons_to_vec_helper(collector, *cell),
+		None => collector,
 	}
 }
 

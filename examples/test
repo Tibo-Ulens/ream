@@ -1,1 +1,46 @@
-(+ 1 (if #true `()))
+#true
+#t
+#false
+#f
+1
+0x123
+0b1011
+0o172
+1.3
+'c'
+'\n'
+"test"
+"long\ntest"
+:atom
+`(1 (2 (3 ())))
+`(1 2 3)
+`a
+
+(let a 1)
+
+(begin
+	(let a 3)
+	a)
+
+a
+
+(let a 2)
+
+a
+
+(+ 1 2)
+
+(begin
+	(let y 3)
+	(let foo (lambda x (+ x y)))
+
+	(foo 2))
+
+(begin
+	(let y 3)
+	(let foo (lambda x (+ x y)))
+	(foo 4))
+
+;; 	(foo 2))
+
+; (+ 1 (if #true `()))

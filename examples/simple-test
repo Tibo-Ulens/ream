@@ -1,4 +1,4 @@
-(define fib
+(let fib
 	(lambda n
 		(if (<= n 2)
 			1
@@ -8,19 +8,19 @@
 
 (print (fib 10))
 
-(define append
+(let append
 	(lambda (list1 list2)
         (if (nil? list1)
 			list2
             (cons (car list1) (append (cdr list1) list2)))))
 
-(define rev
+(let rev
 	(lambda l
 		(if (nil? l)
 			`()
 			(append (rev (cdr l)) (car l)))))
 
-(define list (cons 3 (cons 2 (cons 1 `()))))
-(define revlist (rev list))
+(let list (cons 3 (cons 2 (cons 1 `()))))
+(let revlist (rev list))
 (print list)
 (print revlist)
