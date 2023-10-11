@@ -11,7 +11,7 @@ strip = true
 codegen-units = 1
 
 [dependencies]
-clap = { version="4.3.11", features=["derive"] }
-miette = { version="5.9.0", features=["fancy"] }
-thiserror = "1.0.43"
+clap = { version="4.4.6", features=["derive"] }
+miette = { version="5.10.0", features=["fancy"] }
+thiserror = "1.0.49"
 unicode-xid = "0.2.4"

@@ -1,4 +1,4 @@
-.PHONY: all sstat sstatc test sstat-test sstatc-test lint fmt
+.PHONY: all test lint fmt
 
 TOOLCHAIN = nightly
 PROFILE = dev
