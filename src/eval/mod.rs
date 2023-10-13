@@ -13,7 +13,7 @@ mod value;
 
 use value::{ReamType, ReamValue};
 
-use self::primitives::ADD;
+use self::primitives::*;
 
 #[derive(Debug, Clone, Default)]
 struct Scope<'s> {
@@ -108,7 +108,17 @@ impl<'s> Program<'s> {
 	pub fn run(self) -> Result<(), EvalError> {
 		let mut scope_inner = Scope::default();
 
-		scope_inner.set("+", ReamValue { span: (0, 0).into(), t: ADD::<'s> });
+		scope_inner.set("+", ReamValue { span: (0, 0).into(), t: ADD });
+		scope_inner.set("-", ReamValue { span: (0, 0).into(), t: SUB });
+		scope_inner.set("*", ReamValue { span: (0, 0).into(), t: MUL });
+		scope_inner.set("/", ReamValue { span: (0, 0).into(), t: DIV });
+
+		scope_inner.set("==", ReamValue { span: (0, 0).into(), t: EQU });
+		scope_inner.set("!=", ReamValue { span: (0, 0).into(), t: NEQ });
+		scope_inner.set(">", ReamValue { span: (0, 0).into(), t: GT });
+		scope_inner.set(">=", ReamValue { span: (0, 0).into(), t: GTE });
+		scope_inner.set("<", ReamValue { span: (0, 0).into(), t: LT });
+		scope_inner.set("<=", ReamValue { span: (0, 0).into(), t: LTE });
 
 		let global_scope = Rc::new(RefCell::new(scope_inner));
 

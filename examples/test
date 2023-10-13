@@ -28,3 +28,34 @@ a
 	(foo 3)) ;; 13
 
 (+ 1 (if #true 2))
+
+(
+	(
+		(lambda x (x x))
+
+		(lambda (fact-gen)
+			(lambda n
+				(if (== 0 n)
+					1
+					(* n ((fact-gen fact-gen) (- n 1)))))
+		)
+	)
+5)
+
+;; (letrec fact
+;; 	(lambda (n)
+;; 		(if (== n 0)
+;; 			1
+;; 			(* n (fact (- n 1))))))
+
+;; (fact 5)
+
+;; (let fib
+;; 	(lambda n
+;; 		(if (<= n 2)
+;; 			1
+;; 			(+
+;; 				(fib (- n 1))
+;; 				(fib (- n 2))))))
+
+;; (fib 1)
