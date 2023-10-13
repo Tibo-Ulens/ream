@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use miette::SourceSpan;
 
-use super::Scope;
+use super::{Eval, Scope};
 use crate::ast::{Expression, Identifier};
 use crate::EvalError;
 
@@ -39,6 +39,50 @@ pub(super) enum ReamType<'s> {
 	},
 
 	Unit,
+}
+
+impl<'s> ReamValue<'s> {
+	pub(super) fn apply(
+		self,
+		args: Vec<Expression<'s>>,
+		scope: Rc<RefCell<Scope<'s>>>,
+	) -> Result<ReamType<'s>, EvalError> {
+		match self.t {
+			ReamType::Primitive(prim) => prim(self.span, self.t.type_name(), args, scope),
+			ReamType::Closure { formals, body, enclosed_scope } => {
+				if formals.len() != args.len() {
+					return Err(EvalError::WrongArgumentCount {
+						loc:      self.span,
+						callee:   "TODO".to_string(),
+						expected: formals.len(),
+						found:    args.len(),
+					});
+				}
+
+				let arg_values = args
+					.into_iter()
+					.map(|o| o.eval(scope.clone()))
+					.collect::<Result<Vec<ReamValue<'s>>, EvalError>>()?;
+
+				// Create a new scope with the formals set to their respective argument
+				let execution_scope = Scope::extend(enclosed_scope);
+				formals
+					.iter()
+					.map(|f| f.id)
+					.zip(arg_values)
+					.for_each(|(k, v)| execution_scope.borrow_mut().set(k, v));
+
+				let values = body
+					.into_iter()
+					.map(|e| e.eval(execution_scope.clone()))
+					.collect::<Result<Vec<ReamValue<'s>>, EvalError>>()?;
+
+				Ok(values.last().cloned().map(|v| v.t).unwrap_or(ReamType::Unit))
+			},
+
+			_ => Err(EvalError::NotAFunction { loc: self.span, name: self.t.type_name() }),
+		}
+	}
 }
 
 impl<'s> ReamType<'s> {

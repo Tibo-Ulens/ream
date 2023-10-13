@@ -34,11 +34,7 @@ impl<'s, 'r> Eval<'s, 'r> for Expression<'s> {
 				Ok(ReamValue { span, t: ret_value })
 			},
 			Self::ProcedureCall { span, operator, operands } => {
-				// let arguments = operands
-				// 	.into_iter()
-				// 	.map(|o| o.eval(scope.clone()))
-				// 	.collect::<Result<Vec<ReamValue<'s>>, EvalError>>()?;
-
+				let operator = operator.eval(scope.clone())?;
 				let value = operator.apply(operands, scope)?;
 
 				Ok(ReamValue { span, t: value })

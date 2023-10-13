@@ -142,51 +142,71 @@ impl<'s> Parser<'s> {
 		&mut self,
 		initial_span: SourceSpan,
 	) -> Result<ast::Expression<'s>, Error> {
-		let token = self.next()?;
+		let token = self.peek()?;
 
 		let expression_span = initial_span.combine(&token.span);
 
 		match token.t {
 			TokenType::Atom(annotation_type) => {
+				self.next().unwrap();
 				Ok(self.parse_annotation(expression_span, annotation_type)?.into())
 			},
 
-			TokenType::Identifier(_) => {
-				Ok(self.parse_procedure_call(expression_span, token.into())?)
+			TokenType::KwQuote => {
+				self.next().unwrap();
+				Ok(self.parse_quote(expression_span)?.into())
+			},
+			TokenType::KwLet => {
+				self.next().unwrap();
+				Ok(self.parse_definition(expression_span)?)
+			},
+			TokenType::KwBegin => {
+				self.next().unwrap();
+				Ok(self.parse_sequence(expression_span)?)
+			},
+			TokenType::KwLambda => {
+				self.next().unwrap();
+				Ok(self.parse_lambda(expression_span)?)
+			},
+			TokenType::KwIf => {
+				self.next().unwrap();
+				Ok(self.parse_conditional(expression_span)?)
+			},
+			TokenType::KwInclude => {
+				self.next().unwrap();
+				Ok(self.parse_inclusion(expression_span)?)
 			},
 
-			TokenType::KwQuote => Ok(self.parse_quote(expression_span)?.into()),
-			TokenType::KwLet => Ok(self.parse_definition(expression_span)?),
-			TokenType::KwBegin => Ok(self.parse_sequence(expression_span)?),
-			TokenType::KwLambda => Ok(self.parse_lambda(expression_span)?),
-			TokenType::KwIf => Ok(self.parse_conditional(expression_span)?),
-			TokenType::KwInclude => Ok(self.parse_inclusion(expression_span)?),
-
-			tt => {
-				Err(ParseError::UnexpectedToken {
-					loc:      token.span,
-					found:    tt.to_string(),
-					expected: vec![
-						"Atom".to_string(),
-						"Keyword".to_string(),
-						"Identifier".to_string(),
-					],
-				}
-				.into())
-			},
+			// TokenType::Identifier(_) => {
+			// 	Ok(self.parse_procedure_call(expression_span, token.into())?)
+			// },
+			_ => Ok(self.parse_procedure_call(expression_span)?),
+			// tt => {
+			// 	Err(ParseError::UnexpectedToken {
+			// 		loc:      token.span,
+			// 		found:    tt.to_string(),
+			// 		expected: vec![
+			// 			"Atom".to_string(),
+			// 			"Keyword".to_string(),
+			// 			"Identifier".to_string(),
+			// 		],
+			// 	}
+			// 	.into())
+			// },
 		}
 	}
 
 	/// Parse a procedure call of the form `(<operator> <operands>)`
-	/// where operator is `<identifier>
+	/// where operator is `<expression>
 	/// and operands is `<expression>*`
 	///
-	/// `(` and `<operator>` already consumed
+	/// `(` already consumed
 	fn parse_procedure_call(
 		&mut self,
 		initial_span: SourceSpan,
-		operator: ast::Identifier<'s>,
 	) -> Result<ast::Expression<'s>, Error> {
+		let operator = Box::new(self.parse_expression()?);
+
 		let mut operands = vec![];
 		let mut procedure_span = initial_span;
 

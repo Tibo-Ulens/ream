@@ -88,7 +88,7 @@ doc_annotation = "(", ":doc", identifier, string ")" ;
 sequence = "(", "begin", expression, { expression }, ")" ;
 
 procedure_call = "(", call_operator, call_operands, ")" ;
-call_operator = identifier ;
+call_operator = expression ;
 call_operands = { expression } ;
 
 lambda_expression = "(", "lambda", lambda_formals, lambda_body, ")" ;

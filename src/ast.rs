@@ -38,7 +38,7 @@ pub enum Expression<'s> {
 	},
 	ProcedureCall {
 		span:     SourceSpan,
-		operator: Identifier<'s>,
+		operator: Box<Expression<'s>>,
 		operands: Vec<Expression<'s>>,
 	},
 	LambdaExpression {
