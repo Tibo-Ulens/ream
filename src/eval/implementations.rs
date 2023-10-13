@@ -48,6 +48,23 @@ impl<'s, 'r> Eval<'s, 'r> for Expression<'s> {
 
 				Ok(ReamValue { span, t: ReamType::Closure { formals, body, enclosed_scope } })
 			},
+			Self::Conditional { span, test, consequent, alternate } => {
+				let test_value = test.eval(scope.clone())?;
+
+				if test_value.t.is_truthy() {
+					let cons_value = consequent.eval(scope)?;
+
+					return Ok(ReamValue { span, t: cons_value.t });
+				}
+
+				if let Some(alternate) = alternate {
+					let alt_value = alternate.eval(scope)?;
+
+					Ok(ReamValue { span, t: alt_value.t })
+				} else {
+					Ok(ReamValue { span, t: ReamType::Unit })
+				}
+			},
 
 			_ => todo!(),
 		}

@@ -113,7 +113,7 @@ impl<'s> Program<'s> {
 		let global_scope = Rc::new(RefCell::new(scope_inner));
 
 		for expr in self.0 {
-			println!("{:?}", expr.eval(global_scope.clone())?);
+			println!("{:?}", expr.eval(global_scope.clone())?.t);
 		}
 
 		Ok(())

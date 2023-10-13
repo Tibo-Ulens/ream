@@ -16,8 +16,8 @@ type Primitive<'s> = fn(
 
 #[derive(Debug, Clone)]
 pub(super) struct ReamValue<'s> {
-	pub span: SourceSpan,
-	pub t:    ReamType<'s>,
+	pub(super) span: SourceSpan,
+	pub(super) t:    ReamType<'s>,
 }
 
 #[derive(Debug, Clone)]
@@ -42,6 +42,7 @@ pub(super) enum ReamType<'s> {
 }
 
 impl<'s> ReamType<'s> {
+	/// Render the name of this type as a string
 	pub(super) fn type_name(&self) -> String {
 		match self {
 			Self::Boolean(_) => "Boolean".to_string(),
@@ -55,6 +56,23 @@ impl<'s> ReamType<'s> {
 			Self::Primitive(_) => "Primitive".to_string(),
 			Self::Closure { formals: _, body: _, enclosed_scope: _ } => "Closure".to_string(),
 			Self::Unit => "Unit".to_string(),
+		}
+	}
+
+	/// Check if the value is truthy
+	pub(super) fn is_truthy(&self) -> bool {
+		match self {
+			Self::Boolean(b) => *b,
+			Self::Integer(i) => *i != 0,
+			Self::Float(f) => *f != 0.0,
+			Self::Character(_) => true,
+			Self::String(s) => !s.is_empty(),
+			Self::Identifier(_) => true,
+			Self::Atom(_) => true,
+			Self::List(l) => !l.is_empty(),
+			Self::Primitive(_) => true,
+			Self::Closure { formals: _, body: _, enclosed_scope: _ } => true,
+			Self::Unit => true,
 		}
 	}
 }

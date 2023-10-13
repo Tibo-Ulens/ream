@@ -207,7 +207,7 @@ pub enum EvalError {
 	},
 
 	#[allow(missing_docs)]
-	#[error("")]
+	#[error("Wrong type, expected `{expected}` found `{found}`")]
 	#[diagnostic(code(ream::eval_error::wrong_type))]
 	WrongType {
 		#[label = "here"]

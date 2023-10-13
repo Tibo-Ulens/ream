@@ -15,6 +15,7 @@ macro_rules! check_arg_count {
 	};
 }
 
+#[rustfmt::skip]
 pub(super) const ADD<'s>: ReamType<'s> = ReamType::Primitive(|l, i, a, s| {
 	check_arg_count!(l, i, 2, a.len());
 
