@@ -1,56 +1,61 @@
-#![feature(iter_collect_into)]
-
-use std::cell::RefCell;
-use std::env;
+use std::borrow::Cow;
 use std::fs::File;
 use std::io::Read;
-use std::rc::Rc;
 
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate thiserror;
+use clap::Parser as ArgParser;
+use miette::NamedSource;
+use ream::{Error, Lexer, Parser};
 
-use error::Error;
-use ptree::print_tree;
+#[derive(ArgParser, Clone)]
+#[command(author, version, about, long_about=None)]
+struct Args {
+	/// The source file
+	source_file: String,
 
-mod error;
-mod eval;
-mod lex;
-mod parse;
-mod tree;
+	/// How verbose the output should be
+	#[arg(short='v', long="verbose", action=clap::ArgAction::Count)]
+	verbosity: u8,
 
-use lex::Lexer;
+	/// Whether or not to show the output of the lexer
+	#[arg(short = 'l', long = "lex")]
+	show_lex: bool,
+}
 
-use crate::eval::{Env, Eval};
-use crate::parse::Parser;
-use crate::tree::ToNode;
+fn main() -> miette::Result<()> {
+	let args = Args::parse();
 
-fn main() -> Result<(), Error> {
-	let args: Vec<String> = env::args().collect();
+	let mut source_file = File::open(args.source_file.clone()).map_err(Error::from)?;
+	let mut source = String::new();
+	source_file.read_to_string(&mut source).map_err(Error::from)?;
 
-	let file: &str = &args[1];
-	let mut file = File::open(file)?;
-	let mut contents = String::new();
-	file.read_to_string(&mut contents)?;
+	let source: Cow<str> = source.into();
 
-	let chars: Vec<char> = contents.chars().collect();
-	let mut lexer = Lexer::new(&chars);
-	let tokens = lexer.lex()?;
+	let named_source = NamedSource::new(args.source_file.clone(), source.clone());
 
-	for t in tokens.iter() {
-		println!("{}", t);
+	process_file(&source, &args).map_err(|err| err.with_source_code(named_source))
+}
+
+/// Separate function that actually does all the work because miette decided
+/// that [`NamedSource`] didn't need to be [`Copy`] or [`Clone`] for some
+/// reason
+fn process_file(source: &str, args: &Args) -> miette::Result<()> {
+	let lexer = Lexer::new(source);
+
+	if args.show_lex {
+		let tokens = lexer.clone().collect::<Result<Vec<_>, _>>()?;
+
+		println!("{}", tokens.iter().map(|t| format!("{t:?}")).collect::<Vec<_>>().join("\n"));
 	}
 
-	let mut parser = Parser::new(tokens);
-	let ast = parser.parse()?;
+	let token_iterator = lexer.peekable();
 
-	let tree = ast.to_node();
+	let mut parser = Parser::new(source, token_iterator);
 
-	print_tree(&tree).unwrap();
+	let root = parser.parse()?;
 
-	let mut root_env = Rc::new(RefCell::new(Env::default()));
-	ast.eval(&mut root_env)?;
+	println!("{:#?}", root);
+
+	root.run()?;
 
 	Ok(())
 }

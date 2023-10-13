@@ -1,0 +1,103 @@
+(* definition      = *)
+(* concatenation   , *)
+(* termination     ; *)
+(* alternation     | *)
+(* exception       - *)
+(* optionality     [ ... ] *)
+(* repetition      { ... } *)
+(* grouping        ( ... ) *)
+(* terminal string " ... " | ' ... ' *)
+(* terminal regex  r" ... " | r' ... ' *)
+
+(* LEXICAL DEFINITIONS *)
+
+comment = ";", { r"[^\n]*" } ;
+
+tokens = { delimiter }, token, ( { delimiter, { delimiter }, token } | { delimiter }) ;
+
+token = identifier | boolean | integer | float | character | string | atom
+        | "(" | ")" | "." | "`" ;
+
+delimiter = r"\s" | "(" | ")" | '"' | "'" | ";" | "`" ;
+
+identifier = identifier_inital | { identifier_subsequent } ;
+identifier_inital = ?UNICODE_XID_START? | r"[!$%&*/<=>?^_~:+-]" ;
+identifier_subsequent = identifier_initial | ?UNICODE_XID_CONTINUE? | r"[0-9.@]" ;
+
+boolean = "#t" | "#f" | "#true" | "#false" ;
+
+integer = r"([0-9]+)|(0x[0-9a-fA-F]+)|(0o[0-8]+)|(0b[01]+)" ;
+float = r"[0-9]+(?:\.[0-9]+)?" ;
+
+character = "'", r"(?:(?:\\')|[^'])", "'" ;
+
+string = '"', { r'(?:(?:\\")|[^"])' }, '"' ;
+
+atom = ":", identifier ;
+
+(* SIMPLE SYNTACTICAL DEFINITIONS *)
+
+datum = identifier | boolean | integer | float | character | string | atom | list ;
+list = ( "(", { datum }, ")" ) | ( "(", datum, ".", list  ")" ) ;
+
+(* SYNTACTICAL DEFINITIONS *)
+
+program = { expression } ;
+
+expression = identifier
+	| literal
+	| definition
+	| type_alias
+	| algebraic_type_definition
+	| type_annotation
+	| doc_annotation
+	| sequence
+	| procedure_call
+	| lambda_expression
+	| conditional
+	| inclusion ;
+
+literal = quotation | boolean | integer | float | character | string | atom ;
+quotation = ( "(", "quote", datum, ")" ) | ( "`", datum ) ;
+
+definition = "(", "let", identifier, expression, ")" ;
+
+type_alias = "(", "type-alias", identifier, typespec, ")" ;
+
+algebraic_type_definition = "(", "define-type", identifier, typespec, ")" ;
+
+typespec = identifier | ( "(", type_constructor ")" ) ;
+
+type_constructor = "Bottom"
+	| ( "Tuple", { typespec } )
+	| ( "List", typespec )
+	| (
+		"Function",
+		( typespec | "(", typespec, { typespec }, ")" ),
+		( typespec | "(", typespec, { typespec }, ")" )
+	)
+	| ( "Sum", named_typespec, named_typespec, { named_typespec } )
+	| ( "Product", named_typespec, named_typespec, { named_typespec } ) ;
+
+named_typespec = atom | ( "(", atom, [ typespec ], ")" );
+
+type_annotation = "(", ":type", identifier, typespec ")" ;
+
+doc_annotation = "(", ":doc", identifier, string ")" ;
+
+sequence = "(", "begin", expression, { expression }, ")" ;
+
+procedure_call = "(", call_operator, call_operands, ")" ;
+call_operator = expression ;
+call_operands = { expression } ;
+
+lambda_expression = "(", "lambda", lambda_formals, lambda_body, ")" ;
+lambda_formals = identifier | ( "(", { identifier } ")" ) ;
+lambda_body = expression, { expression } ;
+
+conditional = ( "(", "if", cond_test, cond_consequent, [cond_alternate] ")" ) ;
+cond_test = expression ;
+cond_consequent = expression ;
+cond_alternate = expression ;
+
+inclusion = "(", "include", string, { string } ")" ;
