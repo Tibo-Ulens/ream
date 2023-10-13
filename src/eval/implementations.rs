@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use super::{Eval, ReamValue, Scope};
+use super::{Eval, ReamType, ReamValue, Scope};
 use crate::ast::{Datum, Expression, Identifier, Literal};
 use crate::EvalError;
 
@@ -15,13 +15,13 @@ impl<'s, 'r> Eval<'s, 'r> for Expression<'s> {
 				}
 			},
 			Self::Literal(lit) => lit.eval(scope),
-			Self::Definition { span: _, target, value } => {
+			Self::Definition { span, target, value } => {
 				let value = value.eval(scope.clone())?;
 				scope.borrow_mut().set(target.id, value);
 
-				Ok(ReamValue::Unit)
+				Ok(ReamValue { span, t: ReamType::Unit })
 			},
-			Self::Sequence { span: _, seq } => {
+			Self::Sequence { span, seq } => {
 				let sequence_scope = Scope::extend(scope.to_owned());
 
 				let values = seq
@@ -29,20 +29,24 @@ impl<'s, 'r> Eval<'s, 'r> for Expression<'s> {
 					.map(|e| e.eval(sequence_scope.clone()))
 					.collect::<Result<Vec<ReamValue<'s>>, EvalError>>()?;
 
-				Ok(values.last().cloned().unwrap_or(ReamValue::Unit))
-			},
-			Self::ProcedureCall { span: _, operator, operands } => {
-				let arguments = operands
-					.into_iter()
-					.map(|o| o.eval(scope.clone()))
-					.collect::<Result<Vec<ReamValue<'s>>, EvalError>>()?;
+				let ret_value = values.last().cloned().map(|v| v.t).unwrap_or(ReamType::Unit);
 
-				operator.apply(arguments, scope.clone())
+				Ok(ReamValue { span, t: ret_value })
 			},
-			Self::LambdaExpression { span: _, formals, body } => {
+			Self::ProcedureCall { span, operator, operands } => {
+				// let arguments = operands
+				// 	.into_iter()
+				// 	.map(|o| o.eval(scope.clone()))
+				// 	.collect::<Result<Vec<ReamValue<'s>>, EvalError>>()?;
+
+				let value = operator.apply(operands, scope)?;
+
+				Ok(ReamValue { span, t: value })
+			},
+			Self::LambdaExpression { span, formals, body } => {
 				let enclosed_scope = Scope::close(scope.to_owned());
 
-				Ok(ReamValue::Closure { formals, body, enclosed_scope })
+				Ok(ReamValue { span, t: ReamType::Closure { formals, body, enclosed_scope } })
 			},
 
 			_ => todo!(),
@@ -53,13 +57,17 @@ impl<'s, 'r> Eval<'s, 'r> for Expression<'s> {
 impl<'s, 'r> Eval<'s, 'r> for Literal<'s> {
 	fn eval(self, scope: Rc<RefCell<Scope<'s>>>) -> Result<ReamValue<'s>, EvalError> {
 		match self {
-			Self::Quotation { span: _, q } => q.eval(scope),
-			Self::Boolean { span: _, b } => Ok(ReamValue::Boolean(b)),
-			Self::Integer { span: _, i } => Ok(ReamValue::Integer(i)),
-			Self::Float { span: _, f } => Ok(ReamValue::Float(f)),
-			Self::Character { span: _, c } => Ok(ReamValue::Character(c)),
-			Self::String { span: _, s } => Ok(ReamValue::String(s)),
-			Self::Atom { span: _, a } => Ok(ReamValue::Atom(a)),
+			Self::Quotation { span, q } => {
+				let value = q.eval(scope).map(|v| v.t)?;
+
+				Ok(ReamValue { span, t: value })
+			},
+			Self::Boolean { span, b } => Ok(ReamValue { span, t: ReamType::Boolean(b) }),
+			Self::Integer { span, i } => Ok(ReamValue { span, t: ReamType::Integer(i) }),
+			Self::Float { span, f } => Ok(ReamValue { span, t: ReamType::Float(f) }),
+			Self::Character { span, c } => Ok(ReamValue { span, t: ReamType::Character(c) }),
+			Self::String { span, s } => Ok(ReamValue { span, t: ReamType::String(s) }),
+			Self::Atom { span, a } => Ok(ReamValue { span, t: ReamType::Atom(a) }),
 		}
 	}
 }
@@ -67,21 +75,21 @@ impl<'s, 'r> Eval<'s, 'r> for Literal<'s> {
 impl<'s, 'r> Eval<'s, 'r> for Datum<'s> {
 	fn eval(self, _scope: Rc<RefCell<Scope<'s>>>) -> Result<ReamValue<'s>, EvalError> {
 		match self {
-			Self::Identifier { span: _, id } => Ok(ReamValue::Identifier(id)),
-			Self::Boolean { span: _, b } => Ok(ReamValue::Boolean(b)),
-			Self::Integer { span: _, i } => Ok(ReamValue::Integer(i)),
-			Self::Float { span: _, f } => Ok(ReamValue::Float(f)),
-			Self::Character { span: _, c } => Ok(ReamValue::Character(c)),
-			Self::String { span: _, s } => Ok(ReamValue::String(s)),
-			Self::Atom { span: _, a } => Ok(ReamValue::Atom(a)),
-			Self::List { span: _, l } => {
+			Self::Identifier { span, id } => Ok(ReamValue { span, t: ReamType::Identifier(id) }),
+			Self::Boolean { span, b } => Ok(ReamValue { span, t: ReamType::Boolean(b) }),
+			Self::Integer { span, i } => Ok(ReamValue { span, t: ReamType::Integer(i) }),
+			Self::Float { span, f } => Ok(ReamValue { span, t: ReamType::Float(f) }),
+			Self::Character { span, c } => Ok(ReamValue { span, t: ReamType::Character(c) }),
+			Self::String { span, s } => Ok(ReamValue { span, t: ReamType::String(s) }),
+			Self::Atom { span, a } => Ok(ReamValue { span, t: ReamType::Atom(a) }),
+			Self::List { span, l } => {
 				let datum_vec = Vec::<Datum<'s>>::from(l.to_owned());
 				let rvalue_vec = datum_vec
 					.into_iter()
 					.map(|d| d.eval(_scope.clone()))
 					.collect::<Result<Vec<ReamValue<'s>>, EvalError>>()?;
 
-				Ok(ReamValue::List(rvalue_vec))
+				Ok(ReamValue { span, t: ReamType::List(rvalue_vec) })
 			},
 		}
 	}

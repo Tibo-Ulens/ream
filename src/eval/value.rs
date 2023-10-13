@@ -1,12 +1,27 @@
 use std::cell::RefCell;
-use std::ops::Add;
 use std::rc::Rc;
+
+use miette::SourceSpan;
 
 use super::Scope;
 use crate::ast::{Expression, Identifier};
+use crate::EvalError;
+
+type Primitive<'s> = fn(
+	operator_location: SourceSpan,
+	operator_id: String,
+	arguments: Vec<Expression<'s>>,
+	scope: Rc<RefCell<Scope<'s>>>,
+) -> Result<ReamType<'s>, EvalError>;
 
 #[derive(Debug, Clone)]
-pub(super) enum ReamValue<'s> {
+pub(super) struct ReamValue<'s> {
+	pub span: SourceSpan,
+	pub t:    ReamType<'s>,
+}
+
+#[derive(Debug, Clone)]
+pub(super) enum ReamType<'s> {
 	Boolean(bool),
 	Integer(u64),
 	Float(f64),
@@ -16,6 +31,7 @@ pub(super) enum ReamValue<'s> {
 	Atom(&'s str),
 	List(Vec<ReamValue<'s>>),
 
+	Primitive(Primitive<'s>),
 	Closure {
 		formals:        Vec<Identifier<'s>>,
 		body:           Vec<Expression<'s>>,
@@ -25,14 +41,20 @@ pub(super) enum ReamValue<'s> {
 	Unit,
 }
 
-impl<'s> Add for ReamValue<'s> {
-	type Output = Self;
-
-	fn add(self, rhs: Self) -> Self::Output {
-		match (self, rhs) {
-			(Self::Integer(a), Self::Integer(b)) => Self::Integer(a + b),
-			(Self::Float(a), Self::Float(b)) => Self::Float(a + b),
-			_ => unimplemented!(),
+impl<'s> ReamType<'s> {
+	pub(super) fn type_name(&self) -> String {
+		match self {
+			Self::Boolean(_) => "Boolean".to_string(),
+			Self::Integer(_) => "Integer".to_string(),
+			Self::Float(_) => "Float".to_string(),
+			Self::Character(_) => "Character".to_string(),
+			Self::String(_) => "String".to_string(),
+			Self::Identifier(_) => "Identifier".to_string(),
+			Self::Atom(_) => "Atom".to_string(),
+			Self::List(_) => "List".to_string(),
+			Self::Primitive(_) => "Primitive".to_string(),
+			Self::Closure { formals: _, body: _, enclosed_scope: _ } => "Closure".to_string(),
+			Self::Unit => "Unit".to_string(),
 		}
 	}
 }

@@ -205,6 +205,16 @@ pub enum EvalError {
 		expected: usize,
 		found:    usize,
 	},
+
+	#[allow(missing_docs)]
+	#[error("")]
+	#[diagnostic(code(ream::eval_error::wrong_type))]
+	WrongType {
+		#[label = "here"]
+		loc:      SourceSpan,
+		expected: String,
+		found:    String,
+	},
 }
 
 fn format_expected_symbols(ex: &[char]) -> String {

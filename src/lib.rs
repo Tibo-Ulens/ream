@@ -5,6 +5,8 @@
 #![feature(let_chains)]
 #![feature(lazy_cell)]
 #![feature(type_alias_impl_trait)]
+#![allow(incomplete_features)]
+#![feature(generic_const_items)]
 
 pub mod ast;
 mod error;
