@@ -158,15 +158,19 @@ impl<'s> Parser<'s> {
 			},
 			TokenType::KwLet => {
 				self.next().unwrap();
-				Ok(self.parse_definition(expression_span)?)
+				Ok(self.parse_variable_definition(expression_span)?)
 			},
-			TokenType::KwBegin => {
+			TokenType::KwFn => {
 				self.next().unwrap();
-				Ok(self.parse_sequence(expression_span)?)
+				Ok(self.parse_function_definition(expression_span)?)
 			},
 			TokenType::KwLambda => {
 				self.next().unwrap();
-				Ok(self.parse_lambda(expression_span)?)
+				Ok(self.parse_closure_definition(expression_span)?)
+			},
+			TokenType::KwSeq => {
+				self.next().unwrap();
+				Ok(self.parse_sequence(expression_span)?)
 			},
 			TokenType::KwIf => {
 				self.next().unwrap();
@@ -223,12 +227,15 @@ impl<'s> Parser<'s> {
 		Ok(ast::Expression::ProcedureCall { span: procedure_span, operator, operands })
 	}
 
-	/// Parse a definition of the form `(let <target> <value>)`
+	/// Parse a variable definition of the form `(let <target> <value>)`
 	/// where target is `<identifier>`
 	/// and value is `<expression>`
 	///
 	/// `(` and `let` already consumed
-	fn parse_definition(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
+	fn parse_variable_definition(
+		&mut self,
+		initial_span: SourceSpan,
+	) -> Result<ast::Expression<'s>, Error> {
 		let target_token = self.expect(TokenType::Identifier(""))?;
 		let mut definition_span = initial_span.combine(&target_token.span);
 
@@ -238,43 +245,85 @@ impl<'s> Parser<'s> {
 		let right_paren = self.expect(TokenType::RightParen)?;
 		definition_span = definition_span.combine(&right_paren.span);
 
-		Ok(ast::Expression::Definition {
+		Ok(ast::Expression::VariableDefinition {
 			span:   definition_span,
 			target: target_token.into(),
 			value:  Box::new(value),
 		})
 	}
 
-	/// Parse a sequence of the form `(begin <sequence>)`
-	/// where sequence is `<expression>+`
+	/// Parse a variable definition of the form `(fn <target> <formals> <body>)`
+	/// where target is `<identifier>`
+	/// and formals is `<identifier>` or `(<identifier>*)`
+	/// and body is `<expression>+`
 	///
-	/// `(` and `begin` already consumed
-	fn parse_sequence(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
-		let mut exprs = vec![self.parse_expression()?];
-		let mut sequence_span = initial_span.combine(&self.prev_span);
+	/// `(` and `fn` already consumed
+	fn parse_function_definition(
+		&mut self,
+		initial_span: SourceSpan,
+	) -> Result<ast::Expression<'s>, Error> {
+		let target_token = self.expect(TokenType::Identifier(""))?;
+		let mut function_span = initial_span.combine(&target_token.span);
+
+		let mut formals = vec![];
+
+		let next_token = self.next()?;
+		function_span = function_span.combine(&next_token.span);
+
+		match next_token.t {
+			TokenType::Identifier(_) => formals.push(next_token.into()),
+			TokenType::LeftParen => {
+				while self.peek()?.t != TokenType::RightParen {
+					let formal = self.expect(TokenType::Identifier(""))?;
+					function_span = function_span.combine(&formal.span);
+					formals.push(formal.into());
+				}
+
+				// Unwrap is safe as RightParen is selected for in the loop
+				let right_paren = self.expect(TokenType::RightParen).unwrap();
+				function_span = function_span.combine(&right_paren.span);
+			},
+			tt => {
+				return Err(ParseError::InvalidFormals {
+					loc:   next_token.span,
+					found: tt.to_string(),
+				}
+				.into());
+			},
+		}
+
+		let mut body = vec![];
 
 		while self.peek()?.t != TokenType::RightParen {
 			let expr = self.parse_expression()?;
-			exprs.push(expr);
-			sequence_span = sequence_span.combine(&self.prev_span);
+			body.push(expr);
+			function_span = function_span.combine(&self.prev_span);
 		}
 
-		// Unwrap is safe as RightParen is selected for in the loop
-		let right_paren = self.expect(TokenType::RightParen).unwrap();
-		sequence_span = sequence_span.combine(&right_paren.span);
+		let right_paren = self.expect(TokenType::RightParen)?;
+		function_span = function_span.combine(&right_paren.span);
 
-		Ok(ast::Expression::Sequence { span: sequence_span, seq: exprs })
+		Ok(ast::Expression::FunctionDefinition {
+			span: function_span,
+			target: target_token.into(),
+			formals,
+			body,
+		})
 	}
 
-	/// Parse a lambda of the form `(lambda <formals> <body>)`
+	/// Parse a closure definition of the form `(lambda <formals> <body>)`
 	/// where formals is `<identifier>` or `(<identifier>*)`
 	/// and body is `<expression>+`
 	///
 	/// `(` and `lambda` already consumed
-	fn parse_lambda(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
-		let mut formals = vec![];
+	fn parse_closure_definition(
+		&mut self,
+		initial_span: SourceSpan,
+	) -> Result<ast::Expression<'s>, Error> {
 		let next_token = self.next()?;
 		let mut lambda_span = initial_span.combine(&next_token.span);
+
+		let mut formals = vec![];
 
 		match next_token.t {
 			TokenType::Identifier(_) => formals.push(next_token.into()),
@@ -290,7 +339,7 @@ impl<'s> Parser<'s> {
 				lambda_span = lambda_span.combine(&right_paren.span);
 			},
 			tt => {
-				return Err(ParseError::InvalidLambdaFormals {
+				return Err(ParseError::InvalidFormals {
 					loc:   next_token.span,
 					found: tt.to_string(),
 				}
@@ -310,7 +359,28 @@ impl<'s> Parser<'s> {
 		let right_paren = self.expect(TokenType::RightParen).unwrap();
 		lambda_span = lambda_span.combine(&right_paren.span);
 
-		Ok(ast::Expression::LambdaExpression { span: lambda_span, formals, body })
+		Ok(ast::Expression::ClosureDefintion { span: lambda_span, formals, body })
+	}
+
+	/// Parse a sequence of the form `(seq <sequence>)`
+	/// where sequence is `<expression>+`
+	///
+	/// `(` and `seq` already consumed
+	fn parse_sequence(&mut self, initial_span: SourceSpan) -> Result<ast::Expression<'s>, Error> {
+		let mut exprs = vec![self.parse_expression()?];
+		let mut sequence_span = initial_span.combine(&self.prev_span);
+
+		while self.peek()?.t != TokenType::RightParen {
+			let expr = self.parse_expression()?;
+			exprs.push(expr);
+			sequence_span = sequence_span.combine(&self.prev_span);
+		}
+
+		// Unwrap is safe as RightParen is selected for in the loop
+		let right_paren = self.expect(TokenType::RightParen).unwrap();
+		sequence_span = sequence_span.combine(&right_paren.span);
+
+		Ok(ast::Expression::Sequence { span: sequence_span, seq: exprs })
 	}
 
 	/// Parse a conditional of the form `(if <test> <consequent> [<alternate>])`

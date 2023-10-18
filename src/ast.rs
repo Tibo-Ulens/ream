@@ -14,13 +14,6 @@ pub struct Program<'s>(pub Vec<Expression<'s>>);
 #[allow(missing_docs)]
 #[derive(Clone, Debug)]
 pub enum Expression<'s> {
-	Identifier(Identifier<'s>),
-	Literal(Literal<'s>),
-	Definition {
-		span:   SourceSpan,
-		target: Identifier<'s>,
-		value:  Box<Expression<'s>>,
-	},
 	TypeAlias {
 		span:   SourceSpan,
 		target: Identifier<'s>,
@@ -32,6 +25,24 @@ pub enum Expression<'s> {
 		spec:   TypeSpec<'s>,
 	},
 	Annotation(Annotation<'s>),
+	Literal(Literal<'s>),
+	Identifier(Identifier<'s>),
+	VariableDefinition {
+		span:   SourceSpan,
+		target: Identifier<'s>,
+		value:  Box<Expression<'s>>,
+	},
+	FunctionDefinition {
+		span:    SourceSpan,
+		target:  Identifier<'s>,
+		formals: Vec<Identifier<'s>>,
+		body:    Vec<Expression<'s>>,
+	},
+	ClosureDefintion {
+		span:    SourceSpan,
+		formals: Vec<Identifier<'s>>,
+		body:    Vec<Expression<'s>>,
+	},
 	Sequence {
 		span: SourceSpan,
 		seq:  Vec<Expression<'s>>,
@@ -40,11 +51,6 @@ pub enum Expression<'s> {
 		span:     SourceSpan,
 		operator: Box<Expression<'s>>,
 		operands: Vec<Expression<'s>>,
-	},
-	LambdaExpression {
-		span:    SourceSpan,
-		formals: Vec<Identifier<'s>>,
-		body:    Vec<Expression<'s>>,
 	},
 	Conditional {
 		span:       SourceSpan,

@@ -44,23 +44,19 @@ list = ( "(", { datum }, ")" ) | ( "(", datum, ".", list  ")" ) ;
 
 program = { expression } ;
 
-expression = identifier
-	| literal
-	| definition
-	| type_alias
+expression = type_alias
 	| algebraic_type_definition
 	| type_annotation
 	| doc_annotation
+	| literal
+	| identifier
+	| variable_definition
+	| function_definition
+	| closure_definition
 	| sequence
 	| procedure_call
-	| lambda_expression
 	| conditional
 	| inclusion ;
-
-literal = quotation | boolean | integer | float | character | string | atom ;
-quotation = ( "(", "quote", datum, ")" ) | ( "`", datum ) ;
-
-definition = "(", "let", identifier, expression, ")" ;
 
 type_alias = "(", "type-alias", identifier, typespec, ")" ;
 
@@ -85,15 +81,24 @@ type_annotation = "(", ":type", identifier, typespec ")" ;
 
 doc_annotation = "(", ":doc", identifier, string ")" ;
 
-sequence = "(", "begin", expression, { expression }, ")" ;
+literal = quotation | boolean | integer | float | character | string | atom ;
+quotation = ( "(", "quote", datum, ")" ) | ( "`", datum ) ;
+
+variable_definition = "(", "let", identifier, expression, ")" ;
+
+function_definition = "(", "fn", identifier, function_formals, function_body, ")" ;
+function_formals = identifier | ( "(", { identifier } ")" ) ;
+function_body = expression, { expression } ;
+
+closure_definition = "(", "lambda", closure_formals, closure_body, ")" ;
+closure_formals = identifier | ( "(", { identifier } ")" ) ;
+closure_body = expression, { expression } ;
+
+sequence = "(", "seq", expression, { expression }, ")" ;
 
 procedure_call = "(", call_operator, call_operands, ")" ;
 call_operator = expression ;
 call_operands = { expression } ;
-
-lambda_expression = "(", "lambda", lambda_formals, lambda_body, ")" ;
-lambda_formals = identifier | ( "(", { identifier } ")" ) ;
-lambda_body = expression, { expression } ;
 
 conditional = ( "(", "if", cond_test, cond_consequent, [cond_alternate] ")" ) ;
 cond_test = expression ;

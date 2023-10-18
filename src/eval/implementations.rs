@@ -15,11 +15,22 @@ impl<'s, 'r> Eval<'s, 'r> for Expression<'s> {
 				}
 			},
 			Self::Literal(lit) => lit.eval(scope),
-			Self::Definition { span, target, value } => {
+			Self::VariableDefinition { span, target, value } => {
 				let value = value.eval(scope.clone())?;
 				scope.borrow_mut().set(target.id, value);
 
 				Ok(ReamValue { span, t: ReamType::Unit })
+			},
+			Self::FunctionDefinition { span, target, formals, body } => {
+				let function_value = ReamValue { span, t: ReamType::Function { formals, body } };
+				scope.borrow_mut().set(target.id, function_value);
+
+				Ok(ReamValue { span, t: ReamType::Unit })
+			},
+			Self::ClosureDefintion { span, formals, body } => {
+				let enclosed_scope = Scope::close(scope.to_owned());
+
+				Ok(ReamValue { span, t: ReamType::Closure { formals, body, enclosed_scope } })
 			},
 			Self::Sequence { span, seq } => {
 				let sequence_scope = Scope::extend(scope.to_owned());
@@ -38,11 +49,6 @@ impl<'s, 'r> Eval<'s, 'r> for Expression<'s> {
 				let value = operator.apply(operands, scope)?;
 
 				Ok(ReamValue { span, t: value })
-			},
-			Self::LambdaExpression { span, formals, body } => {
-				let enclosed_scope = Scope::close(scope.to_owned());
-
-				Ok(ReamValue { span, t: ReamType::Closure { formals, body, enclosed_scope } })
 			},
 			Self::Conditional { span, test, consequent, alternate } => {
 				let test_value = test.eval(scope.clone())?;

@@ -424,8 +424,9 @@ impl<'s> Lexer<'s> {
 
 			"quote" => Token { span: (self.start, id.len()).into(), t: TokenType::KwQuote },
 			"let" => Token { span: (self.start, id.len()).into(), t: TokenType::KwLet },
-			"begin" => Token { span: (self.start, id.len()).into(), t: TokenType::KwBegin },
+			"fn" => Token { span: (self.start, id.len()).into(), t: TokenType::KwFn },
 			"lambda" => Token { span: (self.start, id.len()).into(), t: TokenType::KwLambda },
+			"seq" => Token { span: (self.start, id.len()).into(), t: TokenType::KwSeq },
 			"if" => Token { span: (self.start, id.len()).into(), t: TokenType::KwIf },
 			"include" => Token { span: (self.start, id.len()).into(), t: TokenType::KwInclude },
 
