@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::fmt;
 use std::rc::Rc;
 
 use miette::SourceSpan;
@@ -115,6 +116,29 @@ impl<'s> ReamValue<'s> {
 			},
 
 			_ => Err(EvalError::NotAFunction { loc: self.span, name: self.t.type_name() }),
+		}
+	}
+}
+
+impl<'s> fmt::Display for ReamType<'s> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			Self::Boolean(b) => write!(f, "{b}"),
+			Self::Integer(i) => write!(f, "{i}"),
+			Self::Float(fl) => write!(f, "{fl}"),
+			Self::Character(c) => write!(f, "{c}"),
+			Self::String(s) => write!(f, "{s}"),
+			Self::Identifier(i) => write!(f, "{i}"),
+			Self::Atom(a) => write!(f, "{a}"),
+			Self::List(l) => {
+				let repr: String = l.iter().map(|v| v.t.to_string()).collect::<Vec<_>>().join(", ");
+
+				write!(f, "({repr})")
+			},
+			Self::Primitive(_) => write!(f, "primitive"),
+			Self::Function { formals: _, body: _ } => write!(f, "function"),
+			Self::Closure { formals: _, body: _, enclosed_scope: _ } => write!(f, "closure"),
+			Self::Unit => write!(f, "()"),
 		}
 	}
 }

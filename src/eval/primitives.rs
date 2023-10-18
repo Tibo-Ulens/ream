@@ -37,6 +37,7 @@ macro_rules! generate_primitive {
 				let $argument = $argument.eval(s.clone())?;
 			)*
 
+			#[allow(unused_parens)]
 			match ($( $argument.t ),*) {
 				$(
 					($( $argument_matcher ),+) => {
@@ -266,6 +267,15 @@ generate_primitive! {
 			expected: "Boolean or Integer or Float or Character or String or Identifier or Atom \
 					   or Unit".to_string(),
 			found: a_t.type_name(),
+		})
+	}
+}
+
+generate_primitive! {
+	pub(super) PRINT (a) => {
+		(a) => Ok({
+			println!("{a}");
+			ReamType::Unit
 		})
 	}
 }

@@ -67,10 +67,12 @@ impl<'s> Program<'s> {
 		scope_inner.set("<", ReamValue { span: (0, 0).into(), t: LT });
 		scope_inner.set("<=", ReamValue { span: (0, 0).into(), t: LTE });
 
+		scope_inner.set("print", ReamValue { span: (0, 0).into(), t: PRINT });
+
 		let global_scope = Rc::new(RefCell::new(scope_inner));
 
 		for expr in self.0 {
-			println!("{:?}", expr.eval(global_scope.clone())?.t);
+			expr.eval(global_scope.clone())?;
 		}
 
 		Ok(())

@@ -1,68 +1,51 @@
 (let a 1)
+(print a) ;; 1
 
-(seq
+(print (seq
 	(let a 3)
-	a)
+	a)) ;; 3
 
-a
+(print a) ;; 1
 
 (let a 2)
+(print a) ;; 2
 
-a
-
-(+ 1 2)
+(print (+ 1 2)) ;; 3
 
 (let y 10)
 (let foo (lambda x (+ x y)))
 
-(foo 1) ;; 11
+(print (foo 1)) ;; 11
 
 (fn bar x (+ x 3))
 
-(bar 3) ;; 6
+(print (bar 3)) ;; 6
 
-(seq
+(print (seq
 	(let y 10)
 	(let foo (lambda x (+ x (+ y y))))
 
-	(foo 2)) ;; 22
+	(foo 2))) ;; 22
 
-(seq
+(print (seq
 	(let y 30)
-	(foo 3)) ;; 13
+	(foo 3))) ;; 13
 
-(+ 1 (if #true 2))
+(print (+ 1 (if #true 2))) ;; 3
 
-((lambda x x) 5)
+(print ((lambda x x) 5)) ;; 5
 
-(((lambda x (x x))
-	(lambda (fact-gen)
-		(lambda n
-			(if (== 0 n)
-				1
-				(* n ((fact-gen fact-gen) (- n 1)))))))
-5)
+(print
+	(((lambda x (x x))
+		(lambda (fact-gen)
+			(lambda n
+				(if (== 0 n)
+					1
+					(* n ((fact-gen fact-gen) (- n 1)))))))
+	5)) ;; 120
 
 (fn fact (n) (if (== n 0)
 	1
 	(* n (fact (- n 1)))))
 
-(fact 10)
-
-;; (letrec fact
-;; 	(lambda (n)
-;; 		(if (== n 0)
-;; 			1
-;; 			(* n (fact (- n 1))))))
-
-;; (fact 5)
-
-;; (let fib
-;; 	(lambda n
-;; 		(if (<= n 2)
-;; 			1
-;; 			(+
-;; 				(fib (- n 1))
-;; 				(fib (- n 2))))))
-
-;; (fib 1)
+(print (fact 5)) ;; 120
