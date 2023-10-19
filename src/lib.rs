@@ -1,20 +1,24 @@
 //! Ream language library
 
 #![warn(missing_docs)]
-#![feature(assert_matches)]
 #![allow(incomplete_features)]
+#![feature(assert_matches)]
 #![feature(generic_const_items)]
+#![feature(inline_const)]
+
+use miette::SourceSpan;
 
 pub mod ast;
+pub mod bytecode;
 mod error;
 mod eval;
 mod lex;
 mod parse;
 mod token;
+pub mod vm;
 
 pub use error::*;
 pub use lex::*;
-use miette::SourceSpan;
 pub use parse::*;
 pub use token::*;
 

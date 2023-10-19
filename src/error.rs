@@ -3,6 +3,8 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
+use crate::bytecode::Value;
+
 /// Any possible error
 #[allow(missing_docs)]
 #[derive(Debug, Diagnostic, Error)]
@@ -217,6 +219,20 @@ pub enum EvalError {
 	},
 }
 
+/// Any error related to interpreting bytecode
+#[derive(Clone, Debug, Diagnostic, Error)]
+pub enum InterpretError<'a> {
+	#[allow(missing_docs)]
+	#[error("Wrong type, expected `{}` found `{found}`", format_expected_types(expected))]
+	#[diagnostic(code(ream::eval_error::wrong_type))]
+	WrongType {
+		#[label = "here"]
+		loc:      SourceSpan,
+		expected: &'a [Value],
+		found:    String,
+	},
+}
+
 fn format_expected_symbols(ex: &[char]) -> String {
 	if ex.len() == 1 {
 		format!("`{}`", ex[0])
@@ -230,5 +246,16 @@ fn format_expected_tokens(ex: &[String]) -> String {
 		format!("`{}`", ex[0])
 	} else {
 		format!("one of {}", ex.iter().map(|e| format!("`{}`", e)).collect::<Vec<_>>().join(", "))
+	}
+}
+
+fn format_expected_types(ex: &[Value]) -> String {
+	if ex.len() == 1 {
+		format!("`{}`", ex[0].type_name())
+	} else {
+		format!(
+			"one of {}",
+			ex.iter().map(|e| format!("`{}`", e.type_name())).collect::<Vec<_>>().join(", ")
+		)
 	}
 }
