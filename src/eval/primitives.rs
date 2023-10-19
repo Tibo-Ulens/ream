@@ -234,12 +234,12 @@ generate_primitive! {
 generate_primitive! {
 	pub(super) LT (a, b) => {
 		(ReamType::Boolean(a), ReamType::Boolean(b)) => Ok(ReamType::Boolean(a & !b)),
-		(ReamType::Integer(a), ReamType::Integer(b)) => Ok(ReamType::Boolean(a > b)),
-		(ReamType::Float(a), ReamType::Float(b)) => Ok(ReamType::Boolean(a > b)),
-		(ReamType::Character(a), ReamType::Character(b)) => Ok(ReamType::Boolean(a > b)),
-		(ReamType::String(a), ReamType::String(b)) => Ok(ReamType::Boolean(a > b)),
-		(ReamType::Identifier(a), ReamType::Identifier(b)) => Ok(ReamType::Boolean(a > b)),
-		(ReamType::Atom(a), ReamType::Atom(b)) => Ok(ReamType::Boolean(a > b)),
+		(ReamType::Integer(a), ReamType::Integer(b)) => Ok(ReamType::Boolean(a < b)),
+		(ReamType::Float(a), ReamType::Float(b)) => Ok(ReamType::Boolean(a < b)),
+		(ReamType::Character(a), ReamType::Character(b)) => Ok(ReamType::Boolean(a < b)),
+		(ReamType::String(a), ReamType::String(b)) => Ok(ReamType::Boolean(a < b)),
+		(ReamType::Identifier(a), ReamType::Identifier(b)) => Ok(ReamType::Boolean(a < b)),
+		(ReamType::Atom(a), ReamType::Atom(b)) => Ok(ReamType::Boolean(a < b)),
 		(ReamType::Unit, ReamType::Unit) => Ok(ReamType::Boolean(false))
 
 		(a_t, _) => Err(EvalError::WrongType {
@@ -253,13 +253,13 @@ generate_primitive! {
 
 generate_primitive! {
 	pub(super) LTE (a, b) => {
-		(ReamType::Boolean(a), ReamType::Boolean(b)) => Ok(ReamType::Boolean(a >= b)),
-		(ReamType::Integer(a), ReamType::Integer(b)) => Ok(ReamType::Boolean(a >= b)),
-		(ReamType::Float(a), ReamType::Float(b)) => Ok(ReamType::Boolean(a >= b)),
-		(ReamType::Character(a), ReamType::Character(b)) => Ok(ReamType::Boolean(a >= b)),
-		(ReamType::String(a), ReamType::String(b)) => Ok(ReamType::Boolean(a >= b)),
-		(ReamType::Identifier(a), ReamType::Identifier(b)) => Ok(ReamType::Boolean(a >= b)),
-		(ReamType::Atom(a), ReamType::Atom(b)) => Ok(ReamType::Boolean(a >= b)),
+		(ReamType::Boolean(a), ReamType::Boolean(b)) => Ok(ReamType::Boolean(a <= b)),
+		(ReamType::Integer(a), ReamType::Integer(b)) => Ok(ReamType::Boolean(a <= b)),
+		(ReamType::Float(a), ReamType::Float(b)) => Ok(ReamType::Boolean(a <= b)),
+		(ReamType::Character(a), ReamType::Character(b)) => Ok(ReamType::Boolean(a <= b)),
+		(ReamType::String(a), ReamType::String(b)) => Ok(ReamType::Boolean(a <= b)),
+		(ReamType::Identifier(a), ReamType::Identifier(b)) => Ok(ReamType::Boolean(a <= b)),
+		(ReamType::Atom(a), ReamType::Atom(b)) => Ok(ReamType::Boolean(a <= b)),
 		(ReamType::Unit, ReamType::Unit) => Ok(ReamType::Boolean(false))
 
 		(a_t, _) => Err(EvalError::WrongType {
